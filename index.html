@@ -1,0 +1,461 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}[hidden]{display:none!important}</style></head><body>
+<title>Запуск новых товаров</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
+<style id="css">
+/* Layout: one column of soft rounded cards, tab bar on top; tables without grid lines, rows separated by tint */
+:root{
+  --bg:#F3F1EC; --card:#FFFFFF; --soft:#F7F5F0; --ink:#26302B; --muted:#6E7770; --line:#E7E3DA;
+  --sage:#4E7A5E; --sage-soft:#E3EEE6; --sand:#F6E7C8; --sand-ink:#7A5A16; --rose:#F7DEDA; --rose-ink:#9A3A2E;
+  --input:#FFF8E8; --input-line:#EED9A6;
+  --display:"Unbounded","Onest",system-ui,sans-serif; --body:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:18px; --r-s:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#171B19; --card:#202623; --soft:#262D29; --ink:#E8ECE9; --muted:#9AA39D; --line:#323A35;
+  --sage:#8CC09D; --sage-soft:#24382C; --sand:#3B331F; --sand-ink:#E9C978; --rose:#3D2523; --rose-ink:#F0A79B;
+  --input:#2C2A20; --input-line:#5A4F2C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171B19; --card:#202623; --soft:#262D29; --ink:#E8ECE9; --muted:#9AA39D; --line:#323A35;
+  --sage:#8CC09D; --sage-soft:#24382C; --sand:#3B331F; --sand-ink:#E9C978; --rose:#3D2523; --rose-ink:#F0A79B;
+  --input:#2C2A20; --input-line:#5A4F2C; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance}
+h1{font-size:clamp(22px,3vw,30px);letter-spacing:-.01em}
+h2{font-size:16px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.prod{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input,button{font:inherit;color:inherit}
+select{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px}
+.btn{border:0;border-radius:999px;padding:9px 16px;background:var(--soft);cursor:pointer;font-weight:500}
+.btn:hover{filter:brightness(.97)}
+.btn.main{background:var(--sage);color:#fff}
+:root[data-theme="dark"] .btn.main{color:#132018}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.main{color:#132018}}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.tab:focus-visible{outline:2px solid var(--sage);outline-offset:2px}
+.status{font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:6px;background:var(--card);padding:6px;border-radius:999px;width:max-content;max-width:100%;overflow-x:auto}
+.tab{border:0;background:transparent;border-radius:999px;padding:9px 18px;cursor:pointer;font-weight:500;color:var(--muted);white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--sage-soft);color:var(--ink)}
+.card{background:var(--card);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.grid{display:grid;gap:18px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+@media (max-width:520px){.fields{grid-template-columns:minmax(0,1fr)}}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-size:12px;color:var(--muted)}
+.in{background:var(--input);border:1px solid var(--input-line);border-radius:var(--r-s);padding:9px 12px;width:100%;font-variant-numeric:tabular-nums}
+.in.sm{padding:6px 8px;text-align:center;min-width:56px}
+.verdict{border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:6px}
+.verdict.good{background:var(--sage-soft)} .verdict.ok{background:var(--sand)} .verdict.bad{background:var(--rose)}
+.verdict .v{font-family:var(--display);font-size:22px}
+.verdict.good .v{color:var(--sage)} .verdict.ok .v{color:var(--sand-ink)} .verdict.bad .v{color:var(--rose-ink)}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kpi{background:var(--soft);border-radius:var(--r-s);padding:12px 14px}
+.kpi b{display:block;font-size:20px;font-family:var(--display);font-weight:500;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+.scroll{overflow-x:auto;border-radius:var(--r-s)}
+table{border-collapse:separate;border-spacing:0 4px;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:12px;font-weight:500;color:var(--muted);text-align:right;padding:4px 9px;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td{padding:9px 9px;text-align:right;background:var(--soft);white-space:nowrap}
+td:first-child{border-radius:var(--r-s) 0 0 var(--r-s)} td:last-child{border-radius:0 var(--r-s) var(--r-s) 0}
+tr.start td{background:transparent;color:var(--muted)}
+tr.total td{background:var(--sage-soft);font-weight:600}
+tr.hit-good td{background:var(--sage-soft)} tr.hit-ok td{background:var(--sand)}
+.neg{color:var(--rose-ink)} .pos{color:var(--sage)}
+.chip{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.chip.good{background:var(--sage-soft);color:var(--sage)} .chip.ok{background:var(--sand);color:var(--sand-ink)} .chip.bad{background:var(--rose);color:var(--rose-ink)} .chip.plain{background:var(--card);color:var(--muted)}
+td.goodcell{background:var(--sage-soft);color:var(--sage);font-weight:600}
+td.badcell{background:var(--rose)}
+.note{font-size:13px;color:var(--muted)}
+.steps{display:grid;gap:10px}
+.step{display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;background:var(--soft);border-radius:var(--r-s);padding:14px}
+.step .n{width:44px;height:44px;border-radius:50%;background:var(--sage-soft);color:var(--sage);display:grid;place-items:center;font-family:var(--display);font-weight:600}
+.step h3{margin:0 0 2px;font-size:15px} .step .when{font-size:12px;color:var(--muted)} .step p{margin:6px 0 0;max-width:75ch}
+.norms{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.norm{border-radius:var(--r-s);padding:14px;background:var(--soft)}
+.norm.good{background:var(--sage-soft)} .norm.ok{background:var(--sand)} .norm.bad{background:var(--rose)}
+.norm b{display:block;margin-bottom:2px}
+.keys{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.keys{grid-template-columns:minmax(0,1fr)}}
+.key{background:var(--soft);border-radius:var(--r-s);padding:12px;display:flex;flex-direction:column;gap:6px}
+.rowline{display:flex;gap:8px;align-items:center}
+.ro .in{background:var(--soft);border-color:transparent}
+.seg{display:inline-flex;background:var(--card);border-radius:999px;padding:5px;gap:4px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:8px 18px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg button:focus-visible{outline:2px solid var(--sage);outline-offset:2px}
+.banner{background:var(--sand);color:var(--sand-ink);border-radius:var(--r);padding:14px 18px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.banner b{color:var(--ink)}
+.banner[hidden]{display:none}
+.savebox{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.savebox .in{width:220px;padding:8px 12px}
+.hist td{white-space:normal}
+.empty{background:var(--soft);border-radius:var(--r-s);padding:22px;color:var(--muted);text-align:center}
+.viewing .pane input,.viewing .pane select{pointer-events:none;background:var(--soft);border-color:transparent}
+@media (prefers-reduced-motion:no-preference){.tab,.btn{transition:background .15s}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="note" id="sub">Регламент запуска</div>
+      <h1 id="h">Запуск нового товара</h1>
+    </div>
+    <div class="seg" role="group" aria-label="Площадка">
+      <button type="button" data-mp="WB" aria-pressed="true">Wildberries</button>
+      <button type="button" data-mp="Ozon" aria-pressed="false">Ozon</button>
+    </div>
+  </div>
+  <div class="top">
+    <div class="prod">
+      <select id="prodSel" aria-label="Товар"></select>
+      <button class="btn" id="addProd" type="button">+ Товар</button>
+      <button class="btn" id="delProd" type="button">Удалить</button>
+    </div>
+    <div class="savebox">
+      <input class="in" id="note" placeholder="Комментарий к сохранению" aria-label="Комментарий к сохранению">
+      <button class="btn main" id="save" type="button">Сохранить</button>
+      <span class="status" id="st"></span>
+    </div>
+  </div>
+  <div class="banner" id="banner" hidden></div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-t="calc" aria-selected="true">Расчёт и окупаемость</button>
+    <button class="tab" role="tab" data-t="run" aria-selected="false">Запуск 14 дней</button>
+    <button class="tab" role="tab" data-t="niche" aria-selected="false">Аналитика</button>
+    <button class="tab" role="tab" data-t="rules" aria-selected="false">Регламент</button>
+    <button class="tab" role="tab" data-t="hist" aria-selected="false">История</button>
+  </div>
+
+  <section id="calc" class="pane">
+    <div class="grid">
+      <div class="card">
+        <h2>Вводные</h2>
+        <div class="fields" id="inputs"></div>
+      </div>
+      <div class="card">
+        <div class="verdict" id="verdict"></div>
+        <div class="kpis" id="kpis"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h2>Окупаемость по месяцам</h2>
+      <div class="scroll"><table id="pay"></table></div>
+      <div class="note">Первая партия закупается на 3 месяца плана. С 4-го месяца закуп идёт из оборота. Заказы и ДРР по месяцам можно менять прямо в таблице.</div>
+    </div>
+  </section>
+
+  <section id="run" class="pane" hidden>
+    <div class="grid">
+      <div class="card">
+        <h2>Ключи для закрепления</h2>
+        <div class="keys" id="keys"></div>
+      </div>
+      <div class="card">
+        <h2>Отзывы</h2>
+        <div class="kpis" id="revk"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h2>Лесенка заказов по дням</h2>
+      <div class="scroll"><table id="days"></table></div>
+    </div>
+  </section>
+
+  <section id="niche" class="pane" hidden>
+    <div class="card">
+      <h2>Ниша за 12 месяцев</h2>
+      <div class="fields" id="nicheF"></div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h2>Топ-5 конкурентов</h2>
+      <div class="scroll"><table id="comp"></table></div>
+    </div>
+  </section>
+
+  <section id="rules" class="pane" hidden>
+    <div class="card">
+      <h2>Нормативы для решения</h2>
+      <div class="norms">
+        <div class="norm good"><b>Окупаемость до 3 месяцев</b>Отлично, запускаем</div>
+        <div class="norm ok"><b>Окупаемость на 4-й месяц</b>Хорошо, запускаем</div>
+        <div class="norm bad"><b>Дольше 4 месяцев</b>Товар убыточный, не запускаем</div>
+        <div class="norm"><b>Маржа после планового ДРР</b>Не ниже 15%</div>
+        <div class="norm"><b>ДРР</b>Неделя 1 до 40%, неделя 2 до 30%, плановый ниже 10%</div>
+        <div class="norm"><b>Отзывы</b><span id="normRev"></span></div>
+        <div class="norm"><b>Документы</b>Готовы до оплаты закупа, иначе не запускаем</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h2 id="stepsH">Этапы</h2>
+      <div class="steps" id="steps"></div>
+    </div>
+  </section>
+
+  <section id="hist" class="pane" hidden>
+    <div class="card">
+      <h2>История сохранений</h2>
+      <div class="note">Каждое сохранение записывает снимок товара. Откройте снимок, чтобы посмотреть, какими были план, факт и решение на ту дату, или восстановите его как текущую версию.</div>
+      <div id="histBox"></div>
+    </div>
+  </section>
+</div>
+
+<script id="state" type="application/json">{"mp": "WB", "cur": {"WB": 0, "Ozon": 1}, "products": [{"name": "Новый товар", "start": "", "price": 0, "cost": 0, "comm": 29.5, "logi": 0, "tax": 7, "other": 0, "buy": 90, "launch": 0, "months": [[0, 40], [0, 30], [0, 15], [0, 10], [0, 8], [0, 8]], "keys": [["ключ 1", "НЧ", 0], ["ключ 2", "СЧ", 0], ["ключ 3", "ВЧ", 0]], "revFact": "", "days": {}, "niche": {"now": 0, "ago": 0, "peak": "", "cards": 0}, "comp": [["", "", 0, 0, 0, 0], ["", "", 0, 0, 0, 0], ["", "", 0, 0, 0, 0], ["", "", 0, 0, 0, 0], ["", "", 0, 0, 0, 0]], "mp": "WB", "extra": 0, "history": []}, {"mp": "Ozon", "name": "Новый товар", "start": "", "price": 0, "cost": 0, "comm": 30, "extra": 7, "logi": 0, "tax": 1, "other": 0, "buy": 94, "launch": 0, "months": [[0, 40], [0, 30], [0, 15], [0, 10], [0, 8], [0, 8]], "keys": [["ключ 1", "НЧ", 0], ["ключ 2", "СЧ", 0], ["ключ 3", "ВЧ", 0]], "revFact": "", "days": {}, "niche": {"now": 0, "ago": 0, "peak": "", "cards": 0}, "comp": [["", "", 0, 0, 0, 0], ["", "", 0, 0, 0, 0], ["", "", 0, 0, 0, 0], ["", "", 0, 0, 0, 0], ["", "", 0, 0, 0, 0]], "history": []}]}</script>
+
+<script id="app-js">
+(function(){
+const TPL=document.querySelector('.wrap').outerHTML;
+const S=JSON.parse(document.getElementById('state').textContent);
+const LS='reglament-zapuska-web-v1';
+try{const L=JSON.parse(localStorage.getItem(LS)||'null');if(L&&(L.savedAt||'')>(S.savedAt||'')){Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,L);}}catch(e){}
+// миграция старого формата
+if(typeof S.cur==='number'){S.cur={WB:S.cur,Ozon:-1};S.mp='WB';}
+S.products.forEach(p=>{p.mp=p.mp||'WB';if(p.extra==null)p.extra=0;p.history=p.history||[];});
+const $=id=>document.getElementById(id);
+const fmt=new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0});
+const rub=v=>fmt.format(Math.round(v))+' ₽', num=v=>fmt.format(Math.round(v));
+const pct=(v,d=0)=>(v*100).toFixed(d).replace('.',',')+'%';
+const MN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MPN={WB:'Wildberries',Ozon:'Ozon'};
+let art=null, canSave=true, view=null;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const idxs=()=>S.products.map((p,i)=>p.mp===S.mp?i:-1).filter(i=>i>=0);
+function curIdx(){const l=idxs();let c=S.cur[S.mp];if(!l.includes(c)){c=l[0]??-1;S.cur[S.mp]=c;}return c;}
+const LIVE=()=>S.products[curIdx()];
+const P=()=>view?view.data:LIVE();
+function mark(){if(view)return;$('st').textContent=canSave?'Есть несохранённые изменения':'Изменения видны только вам';}
+
+function calc(p){
+  const unit=p.price-p.cost-p.price*(p.comm+(p.extra||0))/100-p.logi-p.price*p.tax/100-p.other;
+  const b=(p.buy||100)/100, planDrr=p.months[5][1]/100;
+  const marginAfter=(unit-p.price*planDrr/b)/p.price;
+  const initBuy=(p.months[0][0]+p.months[1][0]+p.months[2][0])*p.cost;
+  let cum=-(initBuy+p.launch); const start=cum;
+  const [y,m]=(p.start||'2026-01').split('-').map(Number);
+  const rows=p.months.map(([o,d],k)=>{
+    const sold=Math.round(o*b), rev=sold*p.price, ads=o*p.price*d/100, prof=sold*unit-ads;
+    const buy=k<3?0:o*p.cost, flow=prof+sold*p.cost-buy, prev=cum; cum+=flow;
+    return {k,label:MN[(m-1+k)%12]+' '+(y+Math.floor((m-1+k)/12)),o,d,sold,rev,ads,prof,mar:rev?prof/rev:0,buy,flow,cum,st:cum<0?'minus':(prev<0?'hit':'plus')};
+  });
+  const hit=rows.find(r=>r.cum>=0), pb=hit?hit.k+1:null;
+  let v,cls,why;
+  if(marginAfter<0.15){v='Не запускаем';cls='bad';why='Маржа после планового ДРР '+pct(marginAfter,1)+' — ниже 15%.';}
+  else if(!pb||pb>4){v='Не запускаем';cls='bad';why=pb?'Окупается только на '+pb+'-й месяц — дольше 4 месяцев.':'Не окупается за 6 месяцев.';}
+  else if(pb<=3){v='Запускаем — отлично';cls='good';why='Окупается за '+pb+' мес., маржа после ДРР '+pct(marginAfter,1)+'.';}
+  else{v='Запускаем — хорошо';cls='ok';why='Окупается на 4-й месяц, маржа после ДРР '+pct(marginAfter,1)+'.';}
+  return {unit,marginAfter,start,initBuy,rows,pb,v,cls,why};
+}
+function inputsFor(mp){
+  const L=[['name','Товар','text'],['start','Месяц запуска','month'],['price',mp==='WB'?'Цена до СПП, ₽':'Цена продажи, ₽'],['cost','Себестоимость, ₽'],['comm',mp==='WB'?'Комиссия WB, %':'Комиссия Ozon (FBO), %']];
+  if(mp==='Ozon')L.push(['extra','Эквайринг и последняя миля, %']);
+  L.push(['logi','Логистика на продажу, ₽'],['tax','Налог, %'],['other','Прочие расходы на 1 шт, ₽'],['buy','% выкупа'],['launch','Расходы на запуск, ₽']);
+  return L;
+}
+function renderInputs(){
+  const p=P();
+  $('inputs').innerHTML=inputsFor(p.mp).map(([k,l,t])=>`<div class="f"><label for="i-${k}">${l}</label><input class="in" id="i-${k}" data-k="${k}" type="${t||'number'}" value="${esc(p[k])}" step="any"></div>`).join('');
+  $('inputs').querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{
+    const k=el.dataset.k; p[k]=el.type==='number'?(parseFloat(el.value)||0):el.value; mark();
+    if(k==='name'){renderProds();$('h').textContent=p.name||'Новый товар';}
+    renderCalc();renderRun();
+  }));
+}
+function renderCalc(){
+  const p=P(), c=calc(p);
+  $('verdict').className='verdict '+c.cls;
+  $('verdict').innerHTML=`<div class="note">Решение</div><div class="v">${c.v}</div><div>${c.why}</div>`;
+  $('kpis').innerHTML=[['Вложения на старте',rub(-c.start)],['Окупаемость',c.pb?c.pb+' мес.':'нет за 6 мес.'],['Прибыль на 1 шт до рекламы',rub(c.unit)],['Маржа после планового ДРР',pct(c.marginAfter,1)]]
+    .map(([a,b])=>`<div class="kpi"><span>${a}</span><b>${b}</b></div>`).join('');
+  let h=`<thead><tr><th>Месяц</th><th>Заказы, шт</th><th>ДРР, %</th><th>Выкупы</th><th>Выручка</th><th>Реклама</th><th>Прибыль после рекламы</th><th>Маржа</th><th>Закуп</th><th>Денежный поток</th><th>Накопительно</th><th>Статус</th></tr></thead><tbody>`;
+  h+=`<tr class="start"><td>Старт: закуп на 3 мес. + запуск</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>${rub(c.initBuy)}</td><td class="neg">${rub(c.start)}</td><td class="neg">${rub(c.start)}</td><td></td></tr>`;
+  const T={o:0,sold:0,rev:0,ads:0,prof:0,buy:c.initBuy};
+  c.rows.forEach(r=>{
+    T.o+=r.o;T.sold+=r.sold;T.rev+=r.rev;T.ads+=r.ads;T.prof+=r.prof;T.buy+=r.buy;
+    const rc=r.st==='hit'?(r.k<3?'hit-good':(r.k===3?'hit-ok':'')):'';
+    const chip=r.st==='minus'?'<span class="chip bad">в минусе</span>':r.st==='hit'?`<span class="chip ${r.k<3?'good':r.k===3?'ok':'bad'}">окупился</span>`:'<span class="chip plain">в плюсе</span>';
+    h+=`<tr class="${rc}"><td>${r.k+1}. ${r.label}</td>
+      <td><input class="in sm" data-m="${r.k}" data-j="0" type="number" value="${r.o}" aria-label="Заказы, месяц ${r.k+1}"></td>
+      <td><input class="in sm" data-m="${r.k}" data-j="1" type="number" step="any" value="${r.d}" aria-label="ДРР, месяц ${r.k+1}"></td>
+      <td>${num(r.sold)}</td><td>${rub(r.rev)}</td><td>${rub(r.ads)}</td><td class="${r.prof<0?'neg':''}">${rub(r.prof)}</td><td>${pct(r.mar,1)}</td><td>${r.buy?rub(r.buy):'—'}</td><td>${rub(r.flow)}</td><td class="${r.cum<0?'neg':'pos'}"><b>${rub(r.cum)}</b></td><td>${chip}</td></tr>`;
+  });
+  h+=`<tr class="total"><td>Итого 6 месяцев</td><td>${num(T.o)}</td><td>${pct(T.ads/(T.o*p.price||1),0)}</td><td>${num(T.sold)}</td><td>${rub(T.rev)}</td><td>${rub(T.ads)}</td><td>${rub(T.prof)}</td><td>${pct(T.rev?T.prof/T.rev:0,1)}</td><td>${rub(T.buy)}</td><td></td><td>${rub(c.rows[5].cum)}</td><td></td></tr></tbody>`;
+  $('pay').innerHTML=h;
+  $('pay').querySelectorAll('input').forEach(el=>el.addEventListener('change',()=>{P().months[+el.dataset.m][+el.dataset.j]=parseFloat(el.value)||0;mark();renderCalc();renderRun();}));
+}
+function median(a){a=a.filter(x=>x>0).sort((x,y)=>x-y);if(!a.length)return 0;const m=a.length>>1;return a.length%2?a[m]:(a[m-1]+a[m])/2;}
+const revProg=mp=>mp==='WB'?'«Отзывы за баллы»':'«Баллы за отзывы»';
+function factSum(p){let t=0;for(const d in p.days){const v=p.days[d].o;if(v!==undefined&&v!=='')t+=+v;}return t;}
+function renderRun(){
+  const p=P();
+  $('keys').innerHTML=p.keys.map((k,i)=>`<div class="key"><span class="note">Ключ ${i+1} · ${esc(k[1])}</span>
+    <input class="in" data-ki="${i}" data-kj="0" value="${esc(k[0])}" aria-label="Ключ ${i+1}">
+    <div class="rowline"><span class="note">Цель, позиция</span><input class="in sm" data-ki="${i}" data-kj="2" type="number" value="${k[2]}" aria-label="Целевая позиция ключа ${i+1}"></div></div>`).join('');
+  $('keys').querySelectorAll('input').forEach(el=>el.addEventListener('change',()=>{p.keys[+el.dataset.ki][+el.dataset.kj]=el.type==='number'?(parseFloat(el.value)||0):el.value;mark();renderRun();}));
+  const med=median(p.comp.map(c=>+c[4]||0));
+  $('revk').innerHTML=`<div class="kpi"><span>Медиана отзывов конкурентов</span><b>${med?num(med):'—'}</b></div><div class="kpi"><span>Цель: 10% от конкурента</span><b>${med?num(Math.ceil(med*0.1)):'—'}</b></div>
+    <div class="kpi"><span>Факт отзывов</span><input class="in" id="revFact" type="number" value="${esc(p.revFact)}" aria-label="Факт отзывов"></div>
+    <div class="kpi"><span>Как набираем</span><div style="margin-top:4px">Программа ${revProg(p.mp)} с первого дня</div></div>`;
+  $('revFact').addEventListener('change',e=>{p.revFact=e.target.value;mark();});
+  const m1=p.months[0][0]; let tot=0,tb=0;
+  let h=`<thead><tr><th>День</th><th>Ключи в фокусе</th><th>План заказов</th><th>ДРР</th><th>Бюджет рекламы</th><th>Факт заказов</th><th>Позиция: ${esc(p.keys[0][0])}</th><th>Позиция: ${esc(p.keys[1][0])}</th><th>Позиция: ${esc(p.keys[2][0])}</th></tr></thead><tbody>`;
+  for(let d=1;d<=14;d++){
+    const plan=Math.max(1,Math.round(m1*0.33*d/105)), drr=d<=7?0.4:0.3, bud=plan*p.price*drr; tot+=plan; tb+=bud;
+    const f=p.days[d]||{}, fc=(f.o===undefined||f.o==='')?'':(+f.o>=plan?'goodcell':'badcell');
+    const pos=j=>{const v=f['p'+j], ok=v!==undefined&&v!==''&&+v<=p.keys[j][2];return `<td class="${ok?'goodcell':''}"><input class="in sm" data-d="${d}" data-f="p${j}" type="number" value="${esc(v)}" aria-label="Позиция ключа ${j+1}, день ${d}"></td>`;};
+    h+=`<tr><td><b>${d}</b></td><td style="text-align:left">${d<=4?'НЧ':d<=9?'НЧ + СЧ':'НЧ + СЧ + ВЧ'}</td><td>${plan}</td><td>${pct(drr)}</td><td>${rub(bud)}</td>
+      <td class="${fc}"><input class="in sm" data-d="${d}" data-f="o" type="number" value="${esc(f.o)}" aria-label="Факт заказов, день ${d}"></td>${pos(0)}${pos(1)}${pos(2)}</tr>`;
+  }
+  const tf=factSum(p);
+  h+=`<tr class="total"><td>Итого</td><td></td><td>${tot}</td><td></td><td>${rub(tb)}</td><td>${tf||'—'}</td><td></td><td></td><td></td></tr></tbody>`;
+  $('days').innerHTML=h;
+  $('days').querySelectorAll('input').forEach(el=>el.addEventListener('change',()=>{const d=el.dataset.d;p.days[d]=p.days[d]||{};p.days[d][el.dataset.f]=el.value;mark();renderRun();}));
+}
+function renderNiche(){
+  const p=P(), n=p.niche, g=n.ago?n.now/n.ago-1:0;
+  $('nicheF').innerHTML=[['now','Выручка ниши в месяц сейчас, ₽','number'],['ago','Год назад, ₽','number'],['peak','Пик сезона','text'],['cards','Карточек с продажами','number']]
+    .map(([k,l,t])=>`<div class="f"><label for="n-${k}">${l}</label><input class="in" id="n-${k}" data-k="${k}" type="${t}" value="${esc(n[k])}"></div>`).join('')+
+    `<div class="f ro"><label>Рост ниши за год</label><input class="in" readonly value="${n.ago?pct(g):'—'}" aria-label="Рост ниши за год"></div>`;
+  $('nicheF').querySelectorAll('input[data-k]').forEach(el=>el.addEventListener('change',()=>{n[el.dataset.k]=el.type==='number'?(parseFloat(el.value)||0):el.value;mark();renderNiche();}));
+  const cols=['Бренд','Артикул',p.mp==='WB'?'Цена с СПП, ₽':'Цена на витрине, ₽','Выручка в месяц, ₽','Отзывов','Рейтинг'];
+  let h=`<thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+  p.comp.forEach((r,i)=>{h+='<tr>'+r.map((v,j)=>`<td><input class="in ${j>1?'sm':''}" data-ci="${i}" data-cj="${j}" type="${j>1?'number':'text'}" step="any" value="${j>1&&!v?'':esc(v)}" aria-label="${cols[j]}, конкурент ${i+1}"></td>`).join('')+'</tr>';});
+  const md=j=>median(p.comp.map(r=>+r[j]||0));
+  h+=`<tr class="total"><td>Ориентир (медиана)</td><td></td><td>${md(2)?rub(md(2)):'—'}</td><td>${md(3)?rub(md(3)):'—'}</td><td>${md(4)?num(md(4)):'—'}</td><td>${md(5)?md(5).toFixed(1).replace('.',','):'—'}</td></tr></tbody>`;
+  $('comp').innerHTML=h;
+  $('comp').querySelectorAll('input').forEach(el=>el.addEventListener('change',()=>{p.comp[+el.dataset.ci][+el.dataset.cj]=el.type==='number'?(parseFloat(el.value)||0):el.value;mark();renderNiche();renderRun();}));
+}
+function steps(mp){
+  const wb=mp==='WB';
+  return [
+  ['Аналитика','За 4–6 недель до запуска',`Ниша за 12 месяцев: выручка, сезонность, продавцы. Топ-5 конкурентов на ${MPN[mp]}: цена, выручка, отзывы, конверсии в корзину и заказ, % выкупа. Сравнение карточек и разбор негатива в отзывах.`],
+  ['Экономика и решение','До закупа',wb?'Юнит-экономика с учётом СПП и комиссии WB, план продаж на 6 месяцев с плавающим ДРР, окупаемость по месяцам.':'Юнит-экономика с комиссией Ozon по схеме FBO, эквайрингом и последней милей, план продаж на 6 месяцев с плавающим ДРР, окупаемость по месяцам.'],
+  ['Документы','Заранее: до оплаты закупа',wb?'Все документы на руках до закупа и загружены в карточку до поставки: декларация или сертификат соответствия ЕАЭС либо отказное письмо, СГР и паспорт безопасности для бытовой химии и косметики, маркировка «Честный знак», если категория подлежит. Договор с производителем и право на товарный знак. Нет документов — закуп не оплачиваем: без них карточку заблокируют или не пропустят поставку.':'Все документы на руках до закупа и загружены в ЛК Ozon в раздел «Сертификаты» и привязаны к товару до поставки: декларация или сертификат соответствия ЕАЭС либо отказное письмо, СГР и паспорт безопасности для бытовой химии и косметики, маркировка «Честный знак», если категория подлежит. Договор с производителем и право на товарный знак. Нет документов — закуп не оплачиваем: без них товар не пройдёт модерацию или будет скрыт с витрины.'],
+  ['Подготовка','До прихода на склад',wb?'Карточка готова на 100%: фото, инфографика, видео, SEO под ключи. Семантика НЧ / СЧ / ВЧ. Кампании в поиске собраны и стоят на паузе. Включены «Отзывы за баллы».':'Карточка готова на 100%: фото, инфографика, видео, rich-контент, атрибуты заполнены полностью — Ozon ранжирует по заполненности. Семантика НЧ / СЧ / ВЧ. Собраны «Оплата за клик» и «Продвижение в поиске», стоят на паузе. Включены «Баллы за отзывы».'],
+  ['Распределение по FBO','Поставка',wb?'Первая поставка = план первого месяца × 1,3, по кластерам пропорционально заказам ниши. Рекламу включаем, когда товар принят минимум в 3 кластерах, включая Центральный.':'Первая поставка = план первого месяца × 1,3, по кластерам Ozon пропорционально заказам ниши. Везём напрямую на склады кластеров: кросс-докинг заметно дороже. Рекламу включаем, когда товар принят минимум в 3 кластерах, включая Москву.'],
+  ['Запуск: 14 дней','С появления остатков','Окно повышенного ранжирования новинки. Заказы наращиваем лесенкой: НЧ → СЧ → ВЧ. ДРР первой недели до 40%. Каждый день фиксируем позиции по ключам.'],
+  ['Закрепление ключей','Дни 10–21','Основные запросы крепятся за 1,5–2 недели. Проверяем органику без рекламы. Ключ не закрепился — усиливаем ставку или убираем из приоритета.'],
+  ['Выход на план','Недели 3–8',wb?'Снижаем ДРР до планового, ниже 10%. Подсортировка складов по фактической географии заказов.':'Снижаем ДРР до планового, ниже 10%: переводим бюджет из «Оплаты за клик» в «Продвижение в поиске» с оплатой за заказ. Подсортировка кластеров по фактической географии.'],
+  ['Контроль окупаемости','Конец 1–4 месяца','Сверяем факт с таблицей окупаемости. Не окупился к концу 4-го месяца — выводим товар, закуп не повторяем.']];
+}
+function renderSteps(){
+  const mp=P().mp;
+  $('stepsH').textContent='Этапы · '+MPN[mp];
+  $('normRev').textContent='10% от отзывов конкурента: 10 → 1, 1000 → 100. Набираем через '+revProg(mp)+'.';
+  $('steps').innerHTML=steps(mp).map((s,i)=>`<div class="step"><div class="n">${i+1}</div><div><h3>${s[0]}</h3><div class="when">${s[1]}</div><p>${s[2]}</p></div></div>`).join('');
+}
+const dt=ts=>{const d=new Date(ts);return d.toLocaleDateString('ru-RU')+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});};
+function renderHist(){
+  const p=LIVE();
+  if(!p.history.length){$('histBox').innerHTML='<div class="empty">Сохранений пока нет. Нажмите «Сохранить» — здесь появится первый снимок.</div>';return;}
+  let h='<div class="scroll"><table class="hist"><thead><tr><th>Дата</th><th>Комментарий</th><th>Решение</th><th>Окупаемость</th><th>Маржа после ДРР</th><th>Факт заказов за 14 дней</th><th></th></tr></thead><tbody>';
+  p.history.slice().reverse().forEach((s,ri)=>{
+    const i=p.history.length-1-ri, c=calc(s.data);
+    h+=`<tr${view&&view.i===i?' class="hit-ok"':''}><td>${dt(s.ts)}</td><td style="text-align:left">${esc(s.note)||'—'}</td><td><span class="chip ${c.cls}">${c.v}</span></td><td>${c.pb?c.pb+' мес.':'—'}</td><td>${pct(c.marginAfter,1)}</td><td>${factSum(s.data)||'—'}</td>
+      <td><button class="btn" data-open="${i}" type="button">Открыть</button> <button class="btn" data-rest="${i}" type="button">Восстановить</button></td></tr>`;
+  });
+  $('histBox').innerHTML=h+'</tbody></table></div>';
+  $('histBox').querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>openSnap(+b.dataset.open)));
+  $('histBox').querySelectorAll('[data-rest]').forEach(b=>b.addEventListener('click',()=>restore(+b.dataset.rest,b)));
+}
+function openSnap(i){const s=LIVE().history[i];view={i,ts:s.ts,note:s.note,data:clone(s.data)};all();showTab('calc');}
+function closeSnap(){view=null;all();}
+let restArm=null;
+function restore(i,btn){
+  if(restArm!==i){restArm=i;if(btn)btn.textContent='Точно?';setTimeout(()=>{if(restArm===i){restArm=null;renderHist();renderBanner();}},3000);return;}
+  restArm=null;const p=LIVE(), h=p.history, d=clone(h[i].data);
+  Object.keys(p).forEach(k=>{if(k!=='history')delete p[k];});Object.assign(p,d,{history:h});
+  view=null;mark();$('st').textContent='Снимок восстановлен — нажмите «Сохранить»';all();
+}
+function renderBanner(){
+  const b=$('banner');
+  document.querySelector('.wrap').classList.toggle('viewing',!!view);
+  if(!view){b.hidden=true;b.innerHTML='';return;}
+  b.hidden=false;
+  b.innerHTML=`<div><b>Снимок от ${dt(view.ts)}</b>${view.note?' · '+esc(view.note):''} · только просмотр</div>
+    <div class="savebox"><button class="btn" id="bBack" type="button">К текущим данным</button><button class="btn main" id="bRest" type="button">Восстановить этот снимок</button></div>`;
+  $('bBack').addEventListener('click',closeSnap);
+  $('bRest').addEventListener('click',e=>restore(view.i,e.target));
+}
+function renderProds(){
+  const l=idxs(), c=curIdx();
+  $('prodSel').innerHTML=l.length?l.map(i=>`<option value="${i}" ${i===c?'selected':''}>${esc(S.products[i].name||'Новый товар')}</option>`).join(''):'<option>Нет товаров</option>';
+  $('delProd').disabled=l.length<1;
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mp===S.mp));
+  $('sub').textContent='Регламент запуска · '+MPN[S.mp];
+}
+const EMPTY=mp=>({mp,name:'Новый товар',start:new Date().toISOString().slice(0,7),price:1000,cost:300,comm:mp==='WB'?25:30,extra:mp==='WB'?0:7,logi:mp==='WB'?100:110,tax:mp==='WB'?7:1,other:20,buy:mp==='WB'?90:94,launch:20000,
+  months:[[50,25],[80,15],[100,12],[120,9],[140,8],[150,8]],keys:[['ключ 1','НЧ',10],['ключ 2','СЧ',15],['ключ 3','ВЧ',20]],revFact:'',days:{},niche:{now:0,ago:0,peak:'',cards:0},comp:[0,1,2,3,4].map(()=>['','',0,0,0,0]),history:[]});
+function all(){
+  renderProds();
+  const has=curIdx()>=0;
+  document.querySelectorAll('.pane,.tabs').forEach(e=>e.style.display=has?'':'none');
+  if(!has){$('h').textContent='Добавьте первый товар';renderBanner();return;}
+  $('h').textContent=P().name||'Новый товар';
+  renderBanner();renderInputs();renderCalc();renderRun();renderNiche();renderSteps();renderHist();
+}
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{S.mp=b.dataset.mp;view=null;all();}));
+$('prodSel').addEventListener('change',e=>{S.cur[S.mp]=+e.target.value;view=null;all();});
+$('addProd').addEventListener('click',()=>{view=null;S.products.push(EMPTY(S.mp));S.cur[S.mp]=S.products.length-1;mark();all();showTab('calc');$('i-name').focus();$('i-name').select();});
+let delArm=false;
+$('delProd').addEventListener('click',e=>{
+  if(curIdx()<0)return;
+  if(!delArm){delArm=true;e.target.textContent='Точно удалить?';setTimeout(()=>{delArm=false;e.target.textContent='Удалить';},3000);return;}
+  delArm=false;e.target.textContent='Удалить';S.products.splice(curIdx(),1);S.cur={WB:-1,Ozon:-1};view=null;mark();all();});
+function showTab(id){
+  document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x.dataset.t===id));
+  document.querySelectorAll('.pane').forEach(p=>p.hidden=p.id!==id);
+  try{localStorage.setItem('tab',id)}catch(e){}
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.t)));
+try{const t=localStorage.getItem('tab');if(t&&document.querySelector(`.tab[data-t="${t}"]`))showTab(t);}catch(e){}
+
+function snapshotAll(note){
+  const ts=new Date().toISOString();
+  S.products.forEach((p,i)=>{
+    const d=clone(p);delete d.history;
+    const last=p.history[p.history.length-1], same=last&&JSON.stringify(last.data)===JSON.stringify(d);
+    if(!same||(i===curIdx()&&note)){p.history.push({ts,note:i===curIdx()?note:'',data:d});if(p.history.length>60)p.history.shift();}
+  });
+}
+function doc(){
+  const reset=':root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}';
+  const parts=['<title>'+esc(document.title)+'</title>','<meta name="claude:viewport-fit-sides" content="cover">','<link rel="preconnect" href="https://fonts.googleapis.com">',
+    '<link rel="stylesheet" href="'+document.querySelector('link[rel="stylesheet"]').href+'">','<style id="css">'+$('css').textContent+'</style>',TPL,
+    '<script id="state" type="application/json">'+JSON.stringify(S).replace(/</g,'\\u003c')+'<\/script>','<script id="app-js">'+$('app-js').textContent+'<\/script>'];
+  return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>'+reset+'</style></head><body>'+parts.join('\n')+'</body></html>';
+}
+$('save').addEventListener('click',async()=>{
+  if(!art){
+    if(view){$('st').textContent='Вы смотрите снимок — вернитесь к текущим данным или восстановите его';return;}
+    snapshotAll($('note').value.trim());S.savedAt=new Date().toISOString();
+    try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){}
+    try{const b=new Blob([doc()],{type:'text/html'}),a=document.createElement('a');
+      a.href=URL.createObjectURL(b);a.download='Регламент_запуска_'+S.savedAt.slice(0,10)+'.html';document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+      $('st').textContent='Сохранено в браузере и скачан файл с данными — его можно переслать команде';}
+    catch(e){$('st').textContent='Сохранено в этом браузере';}
+    $('note').value='';renderHist();return;}
+  if(view){$('st').textContent='Вы смотрите снимок — вернитесь к текущим данным или восстановите его';return;}
+  const backup=clone(S.products.map(p=>p.history));
+  snapshotAll($('note').value.trim());
+  $('save').disabled=true;$('st').textContent='Сохраняю…';
+  try{await art.publish(doc());$('st').textContent='Сохранено';$('note').value='';}
+  catch(e){S.products.forEach((p,i)=>p.history=backup[i]);const c=e&&e.code;
+    $('st').textContent=c==='conflict'?'Кто-то сохранил раньше — страница обновится':(c==='not_granted'||c==='not_writer')?'У вас только просмотр':'Не удалось сохранить, попробуйте ещё раз';
+    if(c==='not_writer'||c==='not_granted')canSave=false;}
+  finally{$('save').disabled=false;renderHist();}
+});
+all();
+(async()=>{try{art=window.claude&&await window.claude.use('artifact');}catch(e){art=null;}
+  if(!art){$('save').textContent='Сохранить и скачать';canSave=true;}})();
+})();
+</script>
+</body></html>
