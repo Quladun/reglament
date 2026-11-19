@@ -1,3 +1,4 @@
-# Регламент запуска новых товаров
+# Регламенты ALIU
 
-Страница: https://quladun.github.io/reglament/
+- Портал регламентов компании (граф): https://quladun.github.io/reglament/portal/
+- Регламент запуска новых товаров: https://quladun.github.io/reglament/
