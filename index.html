@@ -119,6 +119,30 @@ td.badcell{background:var(--rose)}
 .pres h2.big{font-size:26px;line-height:1.2}
 .pres .meta{color:var(--muted)}
 .pres table td,.pres table th{text-align:right}.pres table td:first-child,.pres table th:first-child{text-align:left}
+.calwrap{overflow-x:auto;border-radius:var(--r-s)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(92px,1fr)) minmax(96px,1fr);gap:6px;min-width:820px}
+.cal .dh{font-size:12px;color:var(--muted);padding:2px 8px;font-weight:500}
+.cal .dh.wk{text-align:right}
+.cell{background:var(--soft);border-radius:var(--r-s);padding:8px 9px;display:flex;flex-direction:column;gap:3px;min-height:112px;font-variant-numeric:tabular-nums}
+.cell.off{background:transparent}
+.cell .dt{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.cell .dt b{color:var(--ink);font-size:13px}
+.cell .bv{font-family:var(--display);font-size:20px;font-weight:500;line-height:1.15}
+.cell .bv small{font-family:var(--body);font-size:11px;color:var(--muted);font-weight:400;margin-left:3px}
+.cell .or{font-size:12px;color:var(--muted)}
+.cell .in.sm{min-width:0;padding:4px 6px;margin-top:auto}
+.cell.l14{box-shadow:inset 0 0 0 1.5px var(--sage-soft)}
+.cell.today{box-shadow:inset 0 0 0 2px var(--sage)}
+.cell.good{background:var(--sage-soft)} .cell.bad{background:var(--rose)}
+.cell.wk{background:var(--sage-soft);justify-content:center;text-align:right}
+.cell.wk .bv{font-size:18px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-2px;margin-right:6px;background:var(--soft)}
+.legend i.l14{box-shadow:inset 0 0 0 1.5px var(--sage)} .legend i.good{background:var(--sage-soft)} .legend i.bad{background:var(--rose)}
+tr.today td{background:var(--sand)}
+tr.today td:first-child{box-shadow:inset 3px 0 0 var(--sage)}
+.newrow{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:end}
+.newrow .f{min-width:180px}
 @media print{
   body{background:#fff!important;padding:0!important}
   .top,.tabs,.banner,.noprint{display:none!important}
@@ -156,7 +180,8 @@ td.badcell{background:var(--rose)}
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" data-t="calc" aria-selected="true">Расчёт и окупаемость</button>
-    <button class="tab" role="tab" data-t="run" aria-selected="false">Запуск 14 дней</button>
+    <button class="tab" role="tab" data-t="run" aria-selected="false">Новинка 30 дней</button>
+    <button class="tab" role="tab" data-t="cal" aria-selected="false">Календарь выкупов</button>
     <button class="tab" role="tab" data-t="niche" aria-selected="false">Аналитика</button>
     <button class="tab" role="tab" data-t="rules" aria-selected="false">Регламент</button>
     <button class="tab" role="tab" data-t="pres" aria-selected="false">Презентация</button>
@@ -192,6 +217,7 @@ td.badcell{background:var(--rose)}
   </section>
 
   <section id="run" class="pane" hidden>
+    <div class="verdict" id="newB" style="margin-bottom:18px"></div>
     <div class="grid">
       <div class="card">
         <h2>Ключи для закрепления</h2>
@@ -203,8 +229,33 @@ td.badcell{background:var(--rose)}
       </div>
     </div>
     <div class="card" style="margin-top:18px">
-      <h2>Лесенка заказов по дням</h2>
+      <h2>Новинка 30 дней: план и факт по дням</h2>
       <div class="scroll"><table id="days"></table></div>
+      <div class="note">Товар считается новинкой 30 дней с начала продаж. Каждый день вписывайте факт: заказы, выкупы, расход на рекламу и позиции по ключам. Выкупы общие с вкладкой «Календарь выкупов». Дни 1–14 — лесенка заказов, 10–21 — закрепление ключей, 22–30 — выход на план.</div>
+    </div>
+  </section>
+
+  <section id="cal" class="pane" hidden>
+    <div class="grid">
+      <div class="card">
+        <h2>Вводные календаря</h2>
+        <div class="fields" id="calF"></div>
+        <div class="hint">План заказов берётся из таблицы окупаемости: первые 14 дней — лесенка с вкладки «Новинка 30 дней», дальше — ровный темп до плана месяца. Выкуп случается не в день заказа, а через срок доставки, поэтому выкупы сдвинуты на заданное число дней и умножены на % выкупа.</div>
+      </div>
+      <div class="card">
+        <h2>Сколько выкупов нужно</h2>
+        <div class="kpis" id="calK"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h2 id="calH">Первый месяц по дням</h2>
+      <div class="legend"><span><i class="l14"></i>Окно 14 дней</span><span><i class="good"></i>Факт ≥ плана</span><span><i class="bad"></i>Факт ниже плана</span></div>
+      <div class="calwrap"><div class="cal" id="calG"></div></div>
+      <div class="note">В каждом дне: крупно — план выкупов, ниже — план заказов на эту дату. В поле внизу вписывайте фактические выкупы из ЛК.</div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <h2>Норма выкупов по месяцам</h2>
+      <div class="scroll"><table id="calM"></table></div>
     </div>
   </section>
 
@@ -271,7 +322,8 @@ function fix(){
 if(typeof S.cur==='number'){S.cur={WB:S.cur,Ozon:-1};S.mp='WB';}
 S.products.forEach(p=>{p.mp=p.mp||'WB';if(p.spp==null)p.spp=p.mp==='WB'?25:0;if(p.extra==null)p.extra=0;p.history=p.history||[];
   if(!p.id)p.id=Math.random().toString(36).slice(2,10);if(!p.photos)p.photos=[];if(p.cat==null)p.cat='';
-  ['dl','dw','dh'].forEach(k=>{if(p[k]==null)p[k]=0;});if(p.whk==null)p.whk=100;if(p.il==null)p.il=1;});
+  ['dl','dw','dh'].forEach(k=>{if(p[k]==null)p[k]=0;});if(p.whk==null)p.whk=100;if(p.il==null)p.il=1;
+  if(p.runDate==null)p.runDate='';if(p.lag==null)p.lag=4;if(!p.cal||typeof p.cal!=='object')p.cal={};});
 }
 fix();
 S.products.forEach(p=>{p.mp=p.mp||'WB';if(p.extra==null)p.extra=0;p.history=p.history||[];});
@@ -426,19 +478,117 @@ function renderRun(){
     <div class="kpi"><span>Факт отзывов</span><input class="in" id="revFact" type="number" value="${esc(p.revFact)}" aria-label="Факт отзывов"></div>
     <div class="kpi"><span>Как набираем</span><div style="margin-top:4px">Программа ${revProg(p.mp)} с первого дня</div></div>`;
   $('revFact').addEventListener('change',e=>{p.revFact=e.target.value;mark();});
-  const m1=p.months[0][0]; let tot=0,tb=0;
-  let h=`<thead><tr><th>День</th><th>Ключи в фокусе</th><th>План заказов</th><th>ДРР</th><th>Бюджет рекламы</th><th>Факт заказов</th><th>Позиция: ${esc(p.keys[0][0])}</th><th>Позиция: ${esc(p.keys[1][0])}</th><th>Позиция: ${esc(p.keys[2][0])}</th></tr></thead><tbody>`;
-  for(let d=1;d<=14;d++){
-    const plan=Math.max(1,Math.round(m1*0.33*d/105)), drr=d<=7?0.4:0.3, bud=plan*p.price*drr; tot+=plan; tb+=bud;
-    const f=p.days[d]||{}, fc=(f.o===undefined||f.o==='')?'':(+f.o>=plan?'goodcell':'badcell');
-    const pos=j=>{const v=f['p'+j], ok=v!==undefined&&v!==''&&+v<=p.keys[j][2];return `<td class="${ok?'goodcell':''}"><input class="in sm" data-d="${d}" data-f="p${j}" type="number" value="${esc(v)}" aria-label="Позиция ключа ${j+1}, день ${d}"></td>`;};
-    h+=`<tr><td><b>${d}</b></td><td style="text-align:left">${d<=4?'НЧ':d<=9?'НЧ + СЧ':'НЧ + СЧ + ВЧ'}</td><td>${plan}</td><td>${pct(drr)}</td><td>${rub(bud)}</td>
-      <td class="${fc}"><input class="in sm" data-d="${d}" data-f="o" type="number" value="${esc(f.o)}" aria-label="Факт заказов, день ${d}"></td>${pos(0)}${pos(1)}${pos(2)}</tr>`;
+  const o=calOrders(p), bo=calPlan(p).bo, t0=runStart(p), DAY=86400000, fact=p.cal||{};
+  const nw=new Date(), today=Date.UTC(nw.getFullYear(),nw.getMonth(),nw.getDate()), dn=Math.floor((today-t0)/DAY)+1;
+  const has=v=>v!==undefined&&v!=='';
+  let T={o:0,b:0,bud:0,fo:0,fb:0,fa:0,po:0,pb:0,fon:0};
+  for(let d=1;d<=30;d++){const f=p.days[d]||{},k=isoD(t0+(d-1)*DAY);if(has(f.o)){T.fo+=+f.o;T.po+=o[d-1];T.fon++;}if(has(fact[k])){T.fb+=+fact[k];T.pb+=bo[d-1];}if(has(f.a))T.fa+=+f.a;}
+  const st=dn<1?`Старт ${ddmm(t0)} — через ${1-dn} дн.`:dn<=30?`Новинка · день ${dn} из 30 · осталось ${30-dn} дн.`:`Период новинки завершён ${ddmm(t0+29*DAY)}`;
+  const nb=$('newB'); nb.className='verdict '+(dn>=1&&dn<=30?'good':dn<1?'ok':'');
+  nb.innerHTML=`<div class="newrow"><div><div class="note">Статус товара</div><div class="v">${st}</div><div class="note">Новинка — 30 дней с начала продаж: ${ddmm(t0)} – ${ddmm(t0+29*DAY)}</div></div>
+    <div class="f"><label for="r-runDate">Дата начала продаж (день 1)</label><input class="in" id="r-runDate" type="date" value="${esc(p.runDate||isoD(t0))}"></div>
+    <div class="kpi"><span>Заказы: факт / план по заполненным дням</span><b class="${T.fon?(T.fo>=T.po?'pos':'neg'):''}">${T.fon?num(T.fo)+' / '+num(T.po):'—'}</b></div>
+    <div class="kpi"><span>Выкупы: факт / план</span><b class="${T.pb||T.fb?(T.fb>=T.pb?'pos':'neg'):''}">${T.pb||T.fb?num(T.fb)+' / '+num(T.pb):'—'}</b></div>
+    <div class="kpi"><span>Реклама факт, ДРР</span><b>${T.fa?rub(T.fa)+(T.fo&&p.price?' · '+pct(T.fa/(T.fo*p.price),0):''):'—'}</b></div></div>`;
+  $('r-runDate').addEventListener('change',e=>{p.runDate=e.target.value;mark();renderRun();});
+  const stage=d=>d<=4?'НЧ':d<=9?'НЧ + СЧ':d<=14?'НЧ + СЧ + ВЧ':d<=21?'Закрепление ключей':'Выход на план';
+  let h=`<thead><tr><th>День</th><th>Дата</th><th style="text-align:left">Этап</th><th>План заказов</th><th>Факт заказов</th><th>План выкупов</th><th>Факт выкупов</th><th>ДРР план</th><th>Бюджет план</th><th>Реклама факт, ₽</th><th>ДРР факт</th><th>Позиция: ${esc(p.keys[0][0])}</th><th>Позиция: ${esc(p.keys[1][0])}</th><th>Позиция: ${esc(p.keys[2][0])}</th></tr></thead><tbody>`;
+  for(let d=1;d<=30;d++){
+    const t=t0+(d-1)*DAY,k=isoD(t),plan=o[d-1],pb=bo[d-1];
+    const drr=d<=7?0.4:d<=14?0.3:(+p.months[0][1]||0)/100, bud=plan*p.price*drr; T.o+=plan;T.b+=pb;T.bud+=bud;
+    const f=p.days[d]||{}, fc=has(f.o)?(+f.o>=plan?'goodcell':'badcell'):'', fb=fact[k], bc=has(fb)?(+fb>=pb?'goodcell':'badcell'):'';
+    const fd=has(f.a)&&has(f.o)&&+f.o>0&&p.price?(+f.a)/(+f.o*p.price):null;
+    const pos=j=>{const v=f['p'+j], ok=has(v)&&+v<=p.keys[j][2];return `<td class="${ok?'goodcell':''}"><input class="in sm" data-d="${d}" data-f="p${j}" type="number" value="${esc(v)}" aria-label="Позиция ключа ${j+1}, день ${d}"></td>`;};
+    h+=`<tr class="${t===today?'today':''}"><td><b>${d}</b></td><td>${ddmm(t)}</td><td style="text-align:left">${stage(d)}</td><td>${plan}</td>
+      <td class="${fc}"><input class="in sm" data-d="${d}" data-f="o" type="number" value="${esc(f.o)}" aria-label="Факт заказов, день ${d}"></td>
+      <td>${pb}</td><td class="${bc}"><input class="in sm" data-cd="${k}" type="number" value="${esc(fb)}" aria-label="Факт выкупов, день ${d}"></td>
+      <td>${pct(drr)}</td><td>${rub(bud)}</td>
+      <td><input class="in sm" data-d="${d}" data-f="a" type="number" value="${esc(f.a)}" aria-label="Расход на рекламу, день ${d}"></td>
+      <td class="${fd===null?'':(fd<=drr?'goodcell':'badcell')}">${fd===null?'—':pct(fd,0)}</td>${pos(0)}${pos(1)}${pos(2)}</tr>`;
   }
-  const tf=factSum(p);
-  h+=`<tr class="total"><td>Итого</td><td></td><td>${tot}</td><td></td><td>${rub(tb)}</td><td>${tf||'—'}</td><td></td><td></td><td></td></tr></tbody>`;
+  h+=`<tr class="total"><td>Итого</td><td></td><td></td><td>${num(T.o)}</td><td>${T.fon?num(T.fo):'—'}</td><td>${num(T.b)}</td><td>${T.fb?num(T.fb):'—'}</td><td></td><td>${rub(T.bud)}</td><td>${T.fa?rub(T.fa):'—'}</td><td>${T.fa&&T.fo&&p.price?pct(T.fa/(T.fo*p.price),0):'—'}</td><td></td><td></td><td></td></tr></tbody>`;
   $('days').innerHTML=h;
-  $('days').querySelectorAll('input').forEach(el=>el.addEventListener('change',()=>{const d=el.dataset.d;p.days[d]=p.days[d]||{};p.days[d][el.dataset.f]=el.value;mark();renderRun();}));
+  $('days').querySelectorAll('input[data-d]').forEach(el=>el.addEventListener('change',()=>{const d=el.dataset.d;p.days[d]=p.days[d]||{};p.days[d][el.dataset.f]=el.value;mark();renderRun();}));
+  $('days').querySelectorAll('input[data-cd]').forEach(el=>el.addEventListener('change',()=>{p.cal=p.cal||{};if(el.value==='')delete p.cal[el.dataset.cd];else p.cal[el.dataset.cd]=el.value;mark();renderRun();}));
+  renderCal();
+}
+const WD=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const isoD=t=>new Date(t).toISOString().slice(0,10);
+const ddmm=t=>{const d=new Date(t);return String(d.getUTCDate()).padStart(2,'0')+'.'+String(d.getUTCMonth()+1).padStart(2,'0');};
+function runStart(p){
+  const r=String(p.runDate||'');
+  if(/^\d{4}-\d{2}-\d{2}$/.test(r)){const [y,m,d]=r.split('-').map(Number);return Date.UTC(y,m-1,d);}
+  if(/^\d{4}-\d{2}$/.test(p.start||'')){const [y,m]=p.start.split('-').map(Number);return Date.UTC(y,m-1,1);}
+  const n=new Date();return Date.UTC(n.getFullYear(),n.getMonth(),n.getDate());
+}
+// план заказов на день запуска d (1..180): дни 1–14 — лесенка, 15–30 — ровно до плана месяца, дальше — план месяца / 30
+function calOrders(p){
+  const m1=+p.months[0][0]||0, o=[];
+  let s14=0;
+  for(let d=1;d<=14;d++){const v=m1?Math.max(1,Math.round(m1*0.33*d/105)):0;o.push(v);s14+=v;}
+  const rest=Math.max(0,m1-s14);
+  for(let d=15;d<=30;d++){o.push(Math.round(rest*(d-14)/16)-Math.round(rest*(d-15)/16));}
+  for(let k=1;k<6;k++){const mo=+p.months[k][0]||0;for(let d=1;d<=30;d++)o.push(Math.round(mo*d/30)-Math.round(mo*(d-1)/30));}
+  return o;
+}
+function calPlan(p){
+  if(p.lag==null||p.lag==='')p.lag=4;
+  const o=calOrders(p), b=Math.min(Math.max((+p.buy||100)/100,0),1), lag=Math.max(0,Math.round(+p.lag||0));
+  const n=o.length+lag, bo=new Array(n).fill(0);
+  let cum=0,prev=0;
+  for(let i=0;i<n;i++){const src=i-lag; if(src>=0&&src<o.length)cum+=o[src]; const r=Math.round(cum*b); bo[i]=r-prev; prev=r;}
+  return {o,bo,lag,b};
+}
+function renderCal(){
+  const p=P(); if(!p||!$('calG'))return;
+  if(p.lag==null||p.lag==='')p.lag=4; if(p.runDate==null)p.runDate=''; if(!p.cal||typeof p.cal!=='object')p.cal={};
+  const t0=runStart(p), {o,bo,lag,b}=calPlan(p), DAY=86400000;
+  const auto=!/^\d{4}-\d{2}-\d{2}$/.test(String(p.runDate||''));
+  $('calF').innerHTML=`<div class="f"><label for="c-runDate">Дата появления остатков (день 1)</label><input class="in" id="c-runDate" data-k="runDate" type="date" value="${esc(p.runDate||isoD(t0))}"></div>
+    <div class="f"><label for="c-lag">Дней от заказа до выкупа</label><input class="in" id="c-lag" data-k="lag" type="number" min="0" step="1" value="${esc(p.lag)}"></div>
+    <div class="f ro"><label>% выкупа (из «Расчёта»)</label><input class="in" readonly value="${esc(p.buy)}%" aria-label="% выкупа"></div>
+    <div class="f ro"><label>План заказов 1-го месяца</label><input class="in" readonly value="${num(+p.months[0][0]||0)} шт" aria-label="План заказов первого месяца"></div>`
+    +(auto?`<div class="hint" style="grid-column:1/-1">Дата не задана — взяли ${p.start?'1-е число месяца запуска':'сегодня'}. Укажите реальную дату, когда товар появится на складах.</div>`:'');
+  $('calF').querySelectorAll('input[data-k]').forEach(el=>el.addEventListener('change',()=>{p[el.dataset.k]=el.type==='number'?Math.max(0,Math.round(parseFloat(el.value)||0)):el.value;mark();renderRun();}));
+  // показываем 30 дней первого месяца + хвост выкупов от заказов последних дней
+  const span=30+lag, fact=p.cal||{};
+  const now=new Date(), today=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+  const sum=(a,f,t)=>a.slice(f,t).reduce((x,y)=>x+y,0);
+  let fs=0,ps=0,any=false;
+  for(let i=0;i<span;i++){const k=isoD(t0+i*DAY),v=fact[k];if(v!==undefined&&v!==''){any=true;fs+=+v;ps+=bo[i];}}
+  const b14=sum(bo,0,14+lag), bM=sum(bo,0,span), avg2=Math.round(sum(bo,30+lag,60+lag)/30*10)/10;
+  $('calK').innerHTML=[['Заказов за 14 дней запуска',num(sum(o,0,14))+' шт'],['Выкупов от этих заказов',num(b14)+' шт'],['Выкупов по заказам 1-го месяца',num(bM)+' шт'],['В день на 2-м месяце',String(avg2).replace('.',',')+' шт']]
+    .map(([a,v])=>`<div class="kpi"><span>${a}</span><b>${v}</b></div>`).join('')
+    +`<div class="kpi" style="grid-column:1/-1"><span>Факт против плана по заполненным дням</span><b class="${any?(fs>=ps?'pos':'neg'):''}">${any?num(fs)+' из '+num(ps)+' шт ('+(ps?pct(fs/ps):'—')+')':'—'}</b></div>`;
+  $('calH').textContent='Первый месяц по дням · '+ddmm(t0)+' – '+ddmm(t0+(span-1)*DAY);
+  // сетка: недели с понедельника
+  const wd0=(new Date(t0).getUTCDay()+6)%7;
+  let g=WD.map(w=>`<div class="dh">${w}</div>`).join('')+'<div class="dh wk">Неделя</div>';
+  let wb=0,wo=0,wf=0,wfAny=false,col=0;
+  const flush=()=>{g+=`<div class="cell wk"><span class="or">выкупов</span><div class="bv">${num(wb)}</div><span class="or">заказов ${num(wo)}</span>${wfAny?`<span class="or">факт ${num(wf)}</span>`:''}</div>`;wb=wo=wf=0;wfAny=false;col=0;};
+  for(let j=0;j<wd0;j++){g+='<div class="cell off"></div>';col++;}
+  for(let i=0;i<span;i++){
+    const t=t0+i*DAY,k=isoD(t),v=fact[k],has=v!==undefined&&v!=='';
+    const cls=['cell',i<14?'l14':'',t===today?'today':'',has?(+v>=bo[i]?'good':'bad'):''].filter(Boolean).join(' ');
+    const ord=i<o.length&&i<30?o[i]:0;
+    g+=`<div class="${cls}"><div class="dt"><b>${ddmm(t)}</b><span>${i<30?'день '+(i+1):'хвост'}</span></div>
+      <div class="bv">${num(bo[i])}<small>выкуп.</small></div><div class="or">${i<30?'заказов '+num(ord):'заказов уже нет'}</div>
+      <input class="in sm" data-cd="${k}" type="number" min="0" value="${esc(v)}" placeholder="факт" aria-label="Факт выкупов ${ddmm(t)}"></div>`;
+    wb+=bo[i];wo+=ord;if(has){wf+=+v;wfAny=true;}col++;
+    if(col===7)flush();
+  }
+  if(col){for(;col<7;)g+='<div class="cell off"></div>',col++;flush();}
+  $('calG').innerHTML=g;
+  $('calG').querySelectorAll('input[data-cd]').forEach(el=>el.addEventListener('change',()=>{p.cal=p.cal||{};if(el.value==='')delete p.cal[el.dataset.cd];else p.cal[el.dataset.cd]=el.value;mark();renderRun();}));
+  // месяцы
+  let h='<thead><tr><th>Месяц</th><th>Даты</th><th>Заказы, шт</th><th>Выкупы, шт</th><th>Заказов в день</th><th>Выкупов в день</th><th>Выкупов в неделю</th></tr></thead><tbody>';
+  let T={o:0,b:0};
+  for(let k=0;k<6;k++){
+    const f=k*30, oo=sum(o,f,f+30), bb=sum(bo,f+lag,f+30+lag); T.o+=oo;T.b+=bb;
+    h+=`<tr><td>Месяц ${k+1}</td><td>${ddmm(t0+f*DAY)} – ${ddmm(t0+(f+29)*DAY)}</td><td>${num(oo)}</td><td><b>${num(bb)}</b></td><td>${(oo/30).toFixed(1).replace('.',',')}</td><td>${(bb/30).toFixed(1).replace('.',',')}</td><td>${num(bb/30*7)}</td></tr>`;
+  }
+  h+=`<tr class="total"><td>Итого 6 месяцев</td><td></td><td>${num(T.o)}</td><td>${num(T.b)}</td><td></td><td></td><td></td></tr></tbody>`;
+  $('calM').innerHTML=h;
 }
 function renderNiche(){
   const p=P(), n=p.niche, g=n.ago?n.now/n.ago-1:0;
@@ -462,7 +612,7 @@ function steps(mp){
   ['Документы','Заранее: до оплаты закупа',wb?'Все документы на руках до закупа и загружены в карточку до поставки: декларация или сертификат соответствия ЕАЭС либо отказное письмо, СГР и паспорт безопасности для бытовой химии и косметики, маркировка «Честный знак», если категория подлежит. Договор с производителем и право на товарный знак. Нет документов — закуп не оплачиваем: без них карточку заблокируют или не пропустят поставку.':'Все документы на руках до закупа и загружены в ЛК Ozon в раздел «Сертификаты» и привязаны к товару до поставки: декларация или сертификат соответствия ЕАЭС либо отказное письмо, СГР и паспорт безопасности для бытовой химии и косметики, маркировка «Честный знак», если категория подлежит. Договор с производителем и право на товарный знак. Нет документов — закуп не оплачиваем: без них товар не пройдёт модерацию или будет скрыт с витрины.'],
   ['Подготовка','До прихода на склад',wb?'Карточка готова на 100%: фото, инфографика, видео, SEO под ключи. Семантика НЧ / СЧ / ВЧ. Кампании в поиске собраны и стоят на паузе. Включены «Отзывы за баллы».':'Карточка готова на 100%: фото, инфографика, видео, rich-контент, атрибуты заполнены полностью — Ozon ранжирует по заполненности. Семантика НЧ / СЧ / ВЧ. Собраны «Оплата за клик» и «Продвижение в поиске», стоят на паузе. Включены «Баллы за отзывы».'],
   ['Распределение по FBO','Поставка',wb?'Первая поставка = план первого месяца × 1,3, по кластерам пропорционально заказам ниши. Рекламу включаем, когда товар принят минимум в 3 кластерах, включая Центральный.':'Первая поставка = план первого месяца × 1,3, по кластерам Ozon пропорционально заказам ниши. Везём напрямую на склады кластеров: кросс-докинг заметно дороже. Рекламу включаем, когда товар принят минимум в 3 кластерах, включая Москву.'],
-  ['Запуск: 14 дней','С появления остатков','Окно повышенного ранжирования новинки. Заказы наращиваем лесенкой: НЧ → СЧ → ВЧ. ДРР первой недели до 40%. Каждый день фиксируем позиции по ключам.'],
+  ['Новинка: 30 дней','С начала продаж','Товар считается новинкой 30 дней с начала продаж — всё это время ежедневно фиксируем факт: заказы, выкупы, расход на рекламу, позиции по ключам. Первые 14 дней — окно повышенного ранжирования: заказы наращиваем лесенкой НЧ → СЧ → ВЧ, ДРР первой недели до 40%, второй — до 30%.'],
   ['Закрепление ключей','Дни 10–21','Основные запросы крепятся за 1,5–2 недели. Проверяем органику без рекламы. Ключ не закрепился — усиливаем ставку или убираем из приоритета.'],
   ['Выход на план','Недели 3–8',wb?'Снижаем ДРР до планового, ниже 10%. Подсортировка складов по фактической географии заказов.':'Снижаем ДРР до планового, ниже 10%: переводим бюджет из «Оплаты за клик» в «Продвижение в поиске» с оплатой за заказ. Подсортировка кластеров по фактической географии.'],
   ['Контроль окупаемости','Конец 1–4 месяца','Сверяем факт с таблицей окупаемости. Не окупился к концу 4-го месяца — выводим товар, закуп не повторяем.']];
