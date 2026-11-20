@@ -104,7 +104,7 @@ a{color:var(--accent)}
 <body>
 <div class="app">
   <aside class="side" id="side">
-    <div class="brand"><h1>ALIU · Регламенты</h1><p>Оргструктура и регламенты · v0.2</p></div>
+    <div class="brand"><h1>ALIU · Регламенты</h1><p>Структура компании от владельца до исполнителя</p></div>
     <div class="search"><input id="q" placeholder="Поиск: чулки, КИЗ, Ozon, отзывы…" autocomplete="off"></div>
     <div class="legend" id="legend"></div>
     <div class="tree" id="tree"></div>
@@ -116,13 +116,14 @@ a{color:var(--accent)}
       <button class="btn" id="homeBtn">ALIU</button>
     </div>
     <svg id="svg"></svg>
-    <div class="hint">Колесо — масштаб · тяни фон — двигать · клик — открыть и приблизить</div>
+    <div class="hint">Колесо — масштаб · тяни фон — двигать · клик по узлу — открыть</div>
   </main>
   <section class="note" id="note"><div class="inner" id="noteInner"></div></section>
 </div>
 
 <script>
-// ============ ДАННЫЕ ============
+// ============ ДАННЫЕ КОМПАНИИ ============
+const CONFIG = {name:'ALIU', subtitle:'Оргструктура и регламенты · v0.3'};
 const TYPES = {
   company:{label:'Компания', hex:'#f5c542', r:30},
   dept:{label:'Отдел', hex:'#a78bfa', r:18},
@@ -743,6 +744,22 @@ node('ref_tables','ref','Рабочие таблицы','ref_hub',
   '<div class="warn">Ссылки добавим, когда пароли и реквизиты будут убраны из таблиц.</div>'
 );
 node('ref_launchcalc','ref','Калькулятор запуска новинки','ref_hub', p('<a href="../" target="_blank">Открыть «Запуск новых товаров» →</a>'));
+node('ref_sources','ref','Источники: откуда брать таблицы и регламенты','ref_hub',
+  p('Где лежит исходная информация, из которой собран портал. Новые материалы берём оттуда же.')+
+  tbl(['Что','Где','На портале'],[
+    ['Список всех таблиц и регламентов', YG+'. Колонки: «Таблицы отделов», «Производство», «Фотосессии», «Регламенты», «Отдел закупок и поставок»','Рабочие таблицы, Ввод сотрудника'],
+    ['Документы', 'YouGile → ALIU → «Маркетплейсы | WB/Ozon» → доска «Документы»','—'],
+    ['Оргструктура, обязанности, отчёты, чек-листы, отпуска, увольнение, запуск', 'Google-таблица «Регламент ALIU» (в YouGile — колонка «Таблицы отделов»). Листы: «Структура», «Информация о сотрудниках», «Обязанности ОС», «Обязанности менеджера ОП», «Чек-лист для …», «Регламент отчёта …», «Отпуска», «Регламент после увольнения сотрудника», «Регламент действий для запуска»','Центр, роли, отчёты, общие правила'],
+    ['ТЗ на поставки WB/Ozon, ТЗ на производство, план производства, ассортимент', 'Таблица «Поставки». Листы: «Инструкция_вб», «Инструкция_Озон», «Правила предзаказа», «Инструкция для плана производства», «Описание»','Регламенты продаж и производства, «Ассортимент»'],
+    ['Неделя снабжения, Честный знак, чулки, поставки, Китай, счета', 'Таблица «Операционный отдел». Листы: «Задачи по дням», «задачи_1», листы «НР-…», «Порядок действий», «Чаты», «Сроки доставки»','Регламенты снабжения, общие правила'],
+    ['ФБС, вывод КИЗов, заказ фурнитуры, движение до СЦ', 'Word-документ регламента операционного отдела (24 скриншота)','Регламенты снабжения'],
+    ['Правила закупок', 'Excel: листы «регл при закупе», «регл при нов тов»','Правила утверждения закупок, Новинки и поставщики'],
+    ['Выкупы, негативные отзывы, спринты', 'YouGile → доска «Таблицы» → колонка «Регламенты» (Google Docs / Sheets)','Закрытый раздел, Отзывы, Спринты'],
+    ['Контент', 'Яндекс Диск: общий диск, инфографика, фотосессии, контент','Рабочие таблицы'],
+    ['Что не описано', 'Анкеты «Вопросы» в каждом отделе','Карточки сотрудников']
+  ])+
+  sec('Не берём', ul(['Таблицы производства — их ведёт и выдаёт руководитель производства','Пароли, реквизиты, личные контакты — только в закрытом разделе']))
+);
 node('ref_gloss','ref','Глоссарий','ref_hub',
   tbl(['Термин','Значение'],[['ФБС / ФБО','Со своего склада / со склада маркетплейса'],['ФФ','Наш склад в Казани'],['СЦ','Сортировочный центр'],['ЧЗ, КИЗ','Честный знак, код маркировки'],['GTIN, ТН ВЭД','Коды товара'],['УПД','Передаточный документ'],['РНП','Рука на пульсе — ежедневная таблица показателей'],['ДРР','Доля рекламных расходов'],['ОП / ОС','Отдел продаж / снабжения'],['ОТК','Контроль качества'],['ТЯК','Рынок в Москве (чулки)'],['COO / CEO','Операционный директор / владелец']])
 );
@@ -761,6 +778,12 @@ x('reg_coo_report','owner'); x('reg_prod_report','owner'); x('reg_fin_report','k
 x('reg_stock','lock_contacts'); x('lock_buy','r_wb'); x('lock_buy','r_ozon'); x('g_pay','r_assist'); x('reg_rop_check','d_sales');
 </script>
 <script>
+// ============ ДВИЖОК ПОРТАЛА (не менять) ============
+const ROOT = N.find(n=>!n.parent).id;
+document.title = CONFIG.name+' — регламенты компании';
+document.querySelector('.brand h1').textContent = CONFIG.name+' · Регламенты';
+document.querySelector('.brand p').textContent = CONFIG.subtitle||'';
+document.getElementById('homeBtn').textContent = CONFIG.name;
 // ============ РАДИАЛЬНЫЙ ГРАФ ============
 const byId = Object.fromEntries(N.map(n=>[n.id,n]));
 const neighbors = {}; N.forEach(n=>neighbors[n.id]=new Set());
@@ -768,7 +791,7 @@ L.forEach(l=>{neighbors[l.source].add(l.target); neighbors[l.target].add(l.sourc
 const kidsOf = {}; N.forEach(n=>{ if(n.parent){ (kidsOf[n.parent]=kidsOf[n.parent]||[]).push(n.id) } });
 
 function build(id){ return {id, children:(kidsOf[id]||[]).map(build)} }
-const root = d3.hierarchy(build('aliu'));
+const root = d3.hierarchy(build(ROOT));
 const RAD = [0, 260, 540, 800, 1000];
 d3.tree().size([2*Math.PI, 1]).separation((a,b)=>(a.parent===b.parent?1:1.6)/Math.max(1,a.depth))(root);
 // развести узлы первого кольца, чтобы не слипались
@@ -820,7 +843,7 @@ nodeG.on('mouseenter',(e,d)=>highlight(d.id)).on('mouseleave',()=>highlight(curr
 function labelMode(k){ nodeG.select('text').style('display',d=>(d.depth<=2||k>0.42)?null:'none'); }
 let hiddenTypes=new Set();
 function highlight(id,soft){
-  if(!id||(soft&&id==='aliu')){
+  if(!id||(soft&&id===ROOT)){
     nodeG.classed('faded',d=>hiddenTypes.has(d.type)); tl.classed('faded',d=>hiddenTypes.has(byId[d.target.data.id].type)); xl.style('display','none'); return;
   }
   const keep=new Set([id,...neighbors[id]]);
@@ -840,7 +863,7 @@ function focusNode(id){
   svg.transition().duration(500).call(zoom.transform,d3.zoomIdentity.translate(wrap.clientWidth/2-k*n.x,wrap.clientHeight/2-k*n.y).scale(k));
 }
 document.getElementById('fitBtn').onclick=()=>{highlight(null);fit()};
-document.getElementById('homeBtn').onclick=()=>{open('aliu');fit()};
+document.getElementById('homeBtn').onclick=()=>{open(ROOT);fit()};
 window.addEventListener('resize',fit);
 
 // ============ ЛЕГЕНДА / ДЕРЕВО ============
@@ -853,8 +876,8 @@ Object.entries(TYPES).forEach(([k,t])=>{
 const tree=document.getElementById('tree');
 const strip=s=>(s||'').replace(/<[^>]+>/g,' ');
 function item(n,lvl){return `<div class="it l${Math.min(lvl,3)}" data-id="${n.id}" data-s="${(n.title+' '+strip(n.body)).toLowerCase().replace(/"/g,'')}"><i style="background:${TYPES[n.type].hex}"></i>${n.title}</div>`}
-let html='<div class="grp">'+item(byId.aliu,1)+'</div>';
-(kidsOf.aliu||[]).forEach(id=>{
+let html='<div class="grp">'+item(byId[ROOT],1)+'</div>';
+(kidsOf[ROOT]||[]).forEach(id=>{
   const n=byId[id];
   html+=`<div class="grp"><div class="gt">${n.title.split(' — ')[0]}</div>`+item(n,1);
   (function walk(pid,lvl){(kidsOf[pid]||[]).forEach(c=>{html+=item(byId[c],lvl); walk(c,lvl+1)})})(id,2);
@@ -885,10 +908,10 @@ function open(id){
     (crumbs?`<div class="crumbs">${crumbs}</div>`:'')+
     `<div class="badge"><i style="background:${TYPES[n.type].hex}"></i>${TYPES[n.type].label}</div><h2>${n.title}</h2>`+
     (n.body||'')+
-    (kids.length&&id!=='aliu'?sec('Внутри',chips(kids)):'')+
+    (kids.length&&id!==ROOT?sec('Внутри',chips(kids)):'')+
     (rel.length?sec('Связано',chips(rel)):'');
   document.getElementById('note').scrollTop=0;
-  if(id!=='aliu'||window.innerWidth>1100) document.getElementById('note').classList.add('open');
+  if(id!==ROOT||window.innerWidth>1100) document.getElementById('note').classList.add('open');
   tree.querySelectorAll('.it').forEach(it=>it.classList.toggle('active',it.dataset.id===id));
   highlight(id,true);
   if(location.hash!=='#'+id) history.replaceState(null,'','#'+id);
@@ -896,8 +919,8 @@ function open(id){
 document.getElementById('noteInner').addEventListener('click',e=>{const t=e.target.closest('[data-go]'); if(t){open(t.dataset.go); focusNode(t.dataset.go)}});
 function copyTpl(b){const t=b.parentElement.previousElementSibling.innerText; navigator.clipboard.writeText(t).then(()=>{b.textContent='Скопировано'; setTimeout(()=>b.textContent='Скопировать',1500)}).catch(()=>{b.textContent='Выделите текст вручную'})}
 window.addEventListener('hashchange',()=>{const id=location.hash.slice(1); if(byId[id]&&id!==currentId){open(id);focusNode(id)}});
-const startId=byId[location.hash.slice(1)]?location.hash.slice(1):'aliu';
-fit(); open(startId); if(startId!=='aliu') setTimeout(()=>focusNode(startId),550);
+const startId=byId[location.hash.slice(1)]?location.hash.slice(1):ROOT;
+fit(); open(startId); if(startId!==ROOT) setTimeout(()=>focusNode(startId),550);
 labelMode(1);
 </script>
 </body>

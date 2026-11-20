@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Регламенты компании</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+:root{
+  --bg:#18181b; --bg2:#1f1f23; --bg3:#26262b; --line:#33333a; --text:#e6e6ea; --muted:#9a9aa5; --dim:#6b6b75;
+  --accent:#a78bfa;
+  --c-company:#f5c542; --c-dept:#a78bfa; --c-role:#38bdf8; --c-reg:#4ade80; --c-ref:#f472b6; --c-general:#fb923c; --c-lock:#71717a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px}
+a{color:var(--accent)}
+.app{display:grid;grid-template-columns:270px 1fr 440px;height:100vh;overflow:hidden}
+/* left */
+.side{background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.brand{padding:16px 16px 10px;border-bottom:1px solid var(--line)}
+.brand h1{margin:0;font-size:17px;font-weight:700;letter-spacing:.2px}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.search{padding:10px 12px;border-bottom:1px solid var(--line)}
+.search input{width:100%;background:var(--bg3);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;font:inherit;outline:none}
+.search input:focus{border-color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.chip{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--bg3);border:1px solid var(--line);border-radius:999px;padding:3px 9px;cursor:pointer;user-select:none}
+.chip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.chip.off{opacity:.35}
+.tree{overflow:auto;padding:8px 6px 20px;flex:1}
+.tree .grp{margin:6px 0}
+.tree .gt{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);padding:8px 10px 4px}
+.tree .it{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:6px;cursor:pointer;color:var(--text);font-size:13px;line-height:1.3}
+.tree .it:hover{background:var(--bg3)}
+.tree .it.active{background:#2e2a45;color:#fff}
+.tree .it i{width:7px;height:7px;border-radius:50%;flex:0 0 7px}
+.tree .it.l2{padding-left:24px;color:#cfcfd6}
+.tree .it.l3{padding-left:38px;color:var(--muted);font-size:12.5px}
+.tree .it.hide{display:none}
+/* graph */
+.graph{position:relative;min-width:0}
+.graph svg{width:100%;height:100%;display:block;cursor:grab}
+.graph svg:active{cursor:grabbing}
+.toolbar{position:absolute;left:14px;top:12px;display:flex;gap:6px;z-index:2}
+.btn{background:var(--bg2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.hint{position:absolute;left:14px;bottom:12px;color:var(--dim);font-size:12px;pointer-events:none}
+.node text{fill:#d4d4dc;font-size:11px;pointer-events:none;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+.link{stroke:#4a4a55;stroke-opacity:.55}
+.link.x{stroke-dasharray:3 3;stroke-opacity:.35}
+.faded{opacity:.12}
+/* note */
+.note{background:var(--bg2);border-left:1px solid var(--line);overflow:auto;min-height:0}
+.note .inner{padding:22px 24px 40px}
+.crumbs{font-size:12px;color:var(--dim);margin-bottom:8px}
+.crumbs span{cursor:pointer}
+.crumbs span:hover{color:var(--accent)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px}
+.badge i{width:8px;height:8px;border-radius:50%}
+.note h2{margin:0 0 12px;font-size:21px;line-height:1.25}
+.note h3{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:22px 0 8px;font-weight:600}
+.note p{line-height:1.6;margin:0 0 10px;color:#d8d8de}
+.note ul,.note ol{margin:0 0 10px;padding-left:20px;line-height:1.6;color:#d8d8de}
+.note li{margin:3px 0}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:6px 0 4px}
+.meta dt{color:var(--muted);font-size:12.5px}
+.meta dd{margin:0;font-size:13px}
+.tbl{width:100%;border-collapse:collapse;margin:4px 0 12px;font-size:12.5px}
+.tbl th,.tbl td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left;vertical-align:top;line-height:1.45}
+.tbl th{color:var(--muted);font-weight:600}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:#3a2f12;color:#f5c542;border:1px solid #5b4a1a}
+.pill.ok{background:#12301f;color:#4ade80;border-color:#1f5236}
+.pill.vac{background:#3a1720;color:#fb7185;border-color:#5b2230}
+.warn{background:#2b2316;border:1px solid #5b4a1a;border-radius:10px;padding:10px 12px;color:#f3d9a4;margin:8px 0 12px;line-height:1.5}
+.lock{background:#232327;border:1px dashed #55555f;border-radius:10px;padding:14px;color:var(--muted);line-height:1.55}
+.rel{display:flex;flex-wrap:wrap;gap:6px}
+.rel span{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12.5px;cursor:pointer}
+.rel span:hover{border-color:var(--accent)}
+.rel span i{width:7px;height:7px;border-radius:50%}
+.tpl{background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:10px 12px;white-space:pre-wrap;line-height:1.55;font-size:13px;margin:0 0 6px;color:#e2e2e8}
+.copy{font-size:11.5px;margin:0 0 12px}
+.week{display:grid;gap:8px}
+.day{background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.day > b{display:block;margin-bottom:4px}
+.day ul{margin:0}
+.mobtabs{display:none}
+@media (max-width:1100px){
+  .app{grid-template-columns:240px 1fr}
+  .note{position:fixed;right:0;top:0;bottom:0;width:min(440px,100%);transform:translateX(100%);transition:transform .2s;z-index:10;box-shadow:-10px 0 30px rgba(0,0,0,.4)}
+  .note.open{transform:none}
+  .closeNote{display:inline-block!important}
+}
+@media (max-width:720px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;left:0;top:0;bottom:0;width:85%;max-width:320px;transform:translateX(-100%);transition:transform .2s;z-index:11}
+  .side.open{transform:none}
+  .menuBtn{display:inline-block!important}
+}
+.closeNote,.menuBtn{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand"><h1>Регламенты</h1><p></p></div>
+    <div class="search"><input id="q" placeholder="Поиск: поставки, отзывы, отпуск…" autocomplete="off"></div>
+    <div class="legend" id="legend"></div>
+    <div class="tree" id="tree"></div>
+  </aside>
+  <main class="graph" id="graphWrap">
+    <div class="toolbar">
+      <button class="btn menuBtn" id="menuBtn">☰ Разделы</button>
+      <button class="btn" id="fitBtn">Показать всё</button>
+      <button class="btn" id="homeBtn">Компания</button>
+    </div>
+    <svg id="svg"></svg>
+    <div class="hint">Колесо — масштаб · тяни фон — двигать · клик по узлу — открыть</div>
+  </main>
+  <section class="note" id="note"><div class="inner" id="noteInner"></div></section>
+</div>
+
+<script>
+// ============ НАСТРОЙКИ ============
+const CONFIG = {name:'НАЗВАНИЕ КОМПАНИИ', subtitle:'Оргструктура и регламенты · v0.1'};
+
+// ============ БИБЛИОТЕКА (не менять) ============
+const TYPES = {
+  company:{label:'Компания', hex:'#f5c542', r:30},
+  dept:{label:'Отдел', hex:'#a78bfa', r:18},
+  role:{label:'Сотрудник', hex:'#38bdf8', r:13},
+  reg:{label:'Регламент', hex:'#4ade80', r:9},
+  general:{label:'Общие правила', hex:'#fb923c', r:9},
+  ref:{label:'Справочник', hex:'#f472b6', r:9},
+  quiz:{label:'Вопросы', hex:'#2dd4bf', r:9},
+  lock:{label:'Закрыто', hex:'#71717a', r:9}
+};
+
+const U = '<span class="pill">уточняется</span>';
+const VAC = '<span class="pill vac">вакансия</span>';
+
+function p(t){return `<p>${t}</p>`}
+function meta(o){return '<dl class="meta">'+Object.entries(o).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')+'</dl>'}
+function sec(t,h){return `<h3>${t}</h3>${h}`}
+function ol(a){return '<ol>'+a.map(x=>`<li>${x}</li>`).join('')+'</ol>'}
+function ul(a){return '<ul>'+a.map(x=>`<li>${x}</li>`).join('')+'</ul>'}
+function tbl(head,rows){return '<table class="tbl"><tr>'+head.map(h=>`<th>${h}</th>`).join('')+'</tr>'+rows.map(r=>'<tr>'+r.map(c=>`<td>${c}</td>`).join('')+'</tr>').join('')+'</table>'}
+function tpl(t){return `<div class="tpl">${t}</div><div class="copy"><button class="btn" onclick="copyTpl(this)">Скопировать</button></div>`}
+function week(days){return '<div class="week">'+days.map(([d,a])=>`<div class="day"><b>${d}</b>${ul(a)}</div>`).join('')+'</div>'}
+function person(o){
+  return meta({'Сотрудник':o.name,'Должность':o.pos,'Отдел':o.dept,'Руководитель':o.boss,'Главный результат':o.result||U,'Город':o.city||U,'Часовой пояс':o.tz||U,'График':o.hours||U,'Формат':o.fmt||U});
+}
+function quiz(title,qs){
+  const text = title+'\n\n'+qs.map((q,i)=>`${i+1}. ${q}`).join('\n');
+  return p('Отправьте сотрудникам отдела. Ответы пришлите в чат — я внесу их в регламент.')+tpl(text);
+}
+const COMMON_Q = [
+  'ФИО полностью и должность так, как вы её называете.',
+  'Город и часовой пояс, рабочие дни и часы (например, пн–пт 9:00–18:00 МСК).',
+  'Работаете в офисе, на складе или удалённо?',
+  'Основной рабочий мессенджер: Макс или Telegram?',
+  'Кто вас замещает на время отпуска или болезни?'
+];
+
+const N=[]; const L=[];
+function node(id,type,title,parent,body,extra={}){N.push(Object.assign({id,type,title,parent,body},extra)); if(parent) L.push({source:parent,target:id,kind:'tree'});}
+function x(a,b){L.push({source:a,target:b,kind:'x'})}
+
+
+// ============ ДАННЫЕ КОМПАНИИ — НАЧАЛО ============
+// =====================================================================
+//  КОНТЕНТ КОМПАНИИ. Правится только этот блок.
+//  node(id, тип, название, родитель, текст)  — узел схемы
+//  x(id1, id2)                                — пунктирная связь между узлами
+//  Типы: company, dept, role, reg, general, ref, quiz, lock
+//  Помощники для текста: p() абзац, sec(заголовок, html), ul([...]), ol([...]),
+//  tbl([шапка],[[строка],...]), meta({поле:значение}), person({...}), quiz(заголовок,[вопросы]), tpl(текст для копирования)
+//  U — пометка «уточняется», VAC — «вакансия»
+// =====================================================================
+
+// ---------- 1. Компания (центр схемы, ровно один узел без родителя) ----------
+node('company','company','НАЗВАНИЕ КОМПАНИИ',null,
+  meta({'Бренд':U,'Каналы продаж':U,'Ассортимент':U,'Производство':U,'Офис и склад':U,'Часовой пояс':U})+
+  sec('Оргструктура', tbl(['Руководитель','Направление','Должность','Сотрудник'],[
+    ['—','Управление бизнесом','Владелец (CEO)',U],
+    ['CEO','Управление','Операционный директор (COO)',U],
+    ['COO','Продажи','Менеджер маркетплейса',U],
+    ['COO','Снабжение','Специалист по снабжению',U],
+    ['COO','Производство','Руководитель производства',U],
+    ['COO / CEO','Финансы','Финансист',U],
+    ['COO / CEO','Бухгалтерия','Бухгалтер',U]
+  ]))+
+  sec('Как пользоваться', ul(['В центре — компания, лучами расходятся направления.','Фиолетовые — отделы, голубые — сотрудники, зелёные — регламенты.','Оранжевые — общие правила, розовые — справочники, бирюзовые — вопросы для сотрудников.']))
+);
+
+// ---------- 2. Руководство ----------
+node('owner','role','Владелец (CEO)','company',
+  person({name:U,pos:'Владелец (CEO)',dept:'Управление бизнесом',boss:'—',result:'Стратегия, развитие и прибыль бизнеса'})+
+  sec('Обязанности', ul(['Стратегия и цели компании','Ключевые управленческие решения','Контроль финансового результата','Утверждение ключевых руководителей','Контроль работы COO','Крупные расходы и инвестиции'])),
+  {short:'CEO'});
+node('coo','role','Операционный директор (COO)','company',
+  person({name:U,pos:'Операционный директор (COO)',dept:'Управление',boss:'CEO',result:'Стабильная и эффективная работа всего бизнеса'})+
+  sec('Обязанности', ul(['Координация всех подразделений','Контроль планов продаж и прибыли','Планирование закупок и производства','Остатки и оборачиваемость','P&L и ДДС с финансистом','Постановка задач и контроль KPI','Еженедельные планёрки','Контроль отчётности подразделений'])),
+  {short:'COO'});
+node('reg_coo_report','reg','Еженедельный отчёт COO','coo',
+  meta({'Период':'понедельник – воскресенье','Срок':'понедельник до 12:00','Кому':'CEO','Формат':'единая Google-таблица'})+
+  sec('Разделы', ol(['Продажи: заказы, % выкупа, продажи, маржа — план, факт, %.','Эффективность менеджеров.','Ассортимент и запуски по этапам.','Закупки и снабжение.','Остатки и оборачиваемость.','Команда.','Проблемы и риски (проблема — последствия — решение — ответственный — срок).','Самооценка недели.','Идеи.','План на неделю: до 5 приоритетов.']))+
+  sec('Правила', ul(['План, факт и %.','Отклонение — с причиной, проблема — с решением.','Критическое — собственнику сразу.']))
+);
+node('q_lead','quiz','Вопросы: руководство','coo', quiz('Вопросы к руководству',[
+  'Цели и KPI компании на квартал.',
+  'Кто кому подчиняется? Какие должности вакантны?',
+  'Лимиты расходов: что COO, финансист и ассистент согласуют сами?',
+  'Расписание общих созвонов и планёрок.',
+  'Какие отчёты и в какие сроки сдают руководители?'
+]));
+
+// ---------- 3. Отделы (копируйте блок для каждого отдела) ----------
+node('d_sales','dept','Продажи','company', sec('Задача отдела', p(U)));
+x('coo','d_sales');
+node('r_mgr','role','Менеджер маркетплейса','d_sales',
+  person({name:U,pos:'Менеджер маркетплейса',dept:'Продажи',boss:'COO',result:'Продажи и прибыльность площадки'})+
+  sec('Обязанности', ul(['Анализ рынка и конкурентов','Выполнение плана продаж','Реклама и продвижение','SEO и контент карточек','Цены и акции','Отзывы и вопросы','ТЗ на поставки и производство','Отчётность']))
+);
+node('reg_mgr_check','reg','Чек-лист менеджера','d_sales',
+  tbl(['Задача','Дни','Дедлайн'],[['Заполнение РНП','пн–пт','9:30'],['Проверка показателей и рекламы','пн–пт','10:00'],['Отзывы, вопросы, возвраты, штрафы','пн–пт','18:00'],['ТЗ на поставки','пн',U],['ТЗ производству','вт',U]])
+);
+node('q_sales','quiz','Вопросы: продажи','d_sales', quiz('Вопросы менеджерам по продажам',[...COMMON_Q,
+  'Какие кабинеты и площадки ведёте?','Ваш план продаж и метрики.','Ежедневный порядок работы — по часам.','Какие таблицы ведёте (ссылки)?','Лимиты по рекламе и ценам.','Что не описано в регламенте?']));
+
+node('d_supply','dept','Снабжение и логистика','company', sec('Задача отдела', p(U)));
+x('coo','d_supply');
+node('r_supply','role','Специалист по снабжению','d_supply',
+  person({name:U,pos:'Специалист по снабжению',dept:'Снабжение',boss:'COO',result:'Своевременные закупки и поставки'})+
+  sec('Обязанности', ul(['Закупки, поставщики','Материалы, упаковка, фурнитура','Маркировка','Логистика до складов маркетплейсов','Рабочие таблицы']))
+);
+node('q_supply','quiz','Вопросы: снабжение','d_supply', quiz('Вопросы снабжению',[...COMMON_Q,
+  'Список поставщиков, условия, сроки.','Недельный порядок работы.','Лимиты закупки без согласования.','Логистика: кто возит, сколько стоит.','Что не описано в регламенте?']));
+
+node('d_prod','dept','Производство и склад','company', sec('Задача отдела', p(U)));
+x('coo','d_prod');
+node('r_prodhead','role','Руководитель производства','d_prod',
+  person({name:U,pos:'Руководитель производства',dept:'Производство',boss:'COO',result:'План выпуска в срок и в качестве'})
+);
+node('reg_prod_report','reg','Еженедельный отчёт производства','r_prodhead',
+  meta({'Срок':'понедельник до 12:00','Кому':'CEO'})+
+  sec('Разделы', ol(['Выпуск: раскроено, отшито, ОТК, незавершёнка — план, факт, %.','Партии и сроки.','Себестоимость и материалы.','Цех и оборудование.','Сотрудники цеха.','Проблемы и риски.','Самооценка.','План на неделю.']))
+);
+node('q_prod','quiz','Вопросы: производство','d_prod', quiz('Вопросы производству',[...COMMON_Q,
+  'Кто руководит цехом, сколько сотрудников, график.','Мощность в день по моделям.','Как устроен контроль качества.','Как считается себестоимость.','Что мешает выпускать в срок?']));
+
+node('d_fin','dept','Финансы и бухгалтерия','company', sec('Задача отдела', p('Контроль денег, ДДС, P&L, бухгалтерский и налоговый учёт.')));
+x('coo','d_fin'); x('owner','d_fin');
+node('r_fin','role','Финансист','d_fin', person({name:U,pos:'Финансист',dept:'Финансы',boss:'COO / CEO',result:'Контроль денег, ДДС, P&L'}));
+node('reg_fin_report','reg','Еженедельный финансовый отчёт','r_fin',
+  meta({'Срок':'среда до 10:00','Формат':'единая Google-таблица'})+
+  sec('Разделы', ol(['Финрезультат: выручка, маржинальная, операционная, чистая прибыль — план, факт, %.','Деньги и кассовые разрывы на 2–4 недели.','Платежи: план, факт, перенесённые, просроченные.','Дебиторка и кредиторка.','Бюджет.','Налоги и бухгалтерия.','Финансовые риски.','Работа отдела, самооценка, план.']))
+);
+node('r_acc','role','Бухгалтер','d_fin', person({name:U,pos:'Бухгалтер',dept:'Бухгалтерия',boss:'COO / CEO',result:'Корректный учёт и отчётность'}));
+node('q_fin','quiz','Вопросы: финансы','d_fin', quiz('Вопросы финансам',[...COMMON_Q,
+  'Где ведутся ДДС, P&L, платёжный календарь?','Порядок согласования платежей и лимиты.','Налоговый календарь.','Сроки зарплаты.']));
+
+// ---------- 4. Общие правила (переносятся почти без изменений) ----------
+node('g_hub','general','Общие правила','company', p('Правила для всех сотрудников.'), {size:16});
+node('g_week','general','Неделя компании','g_hub', week([['Каждый день',['Планёрка — '+U]],['Понедельник',['Отчёты руководителей до 12:00','Таблицы спринтов до 18:00']],['Вторник',['Защита спринтов — '+U]],['Среда',['Финансовый отчёт до 10:00']],['Месяц',['Зарплата — '+U]]]));
+node('g_sprint','general','Спринты','g_hub',
+  meta({'Заполнение':'до 18:00 понедельника','Защита':'вторник, '+U,'Принимает':'COO'})+
+  sec('Требования', ol(['Задачи связаны с целями компании и KPI.','Без рутины.','Понятно новому сотруднику.','Законченное действие: «внедрить», «снизить», «нанять».','Сначала KPI, потом качественные изменения.','Без сокращений.','К понедельнику — итоги прошлой недели и задачи на новую.','Ресурсы других отделов — озвучить на защите.']))
+);
+node('g_pay','general','Счета на оплату','g_hub', ol(['Все счета — в чат «Счета на оплату».','После оплаты — платёжка с подписью: кому и сколько.','Оплаты с рабочей карты фиксируются в чате.']));
+node('g_vacation','general','Отпуска','g_hub',
+  ul(['28 календарных дней в год (по ТК РФ), часть — не меньше 7 дней','Первый отпуск — после 6 месяцев','Согласовать за 30 дней','Перед отпуском: предупредить команду, передать задачи, обозначить сроки'])
+);
+node('g_onboard','general','Ввод нового сотрудника','g_hub',
+  meta({'Испытательный срок':'1 месяц','Отвечает':'Руководитель сотрудника, контроль — COO'})+
+  sec('Порядок', tbl(['Когда','Что'],[['День 1','Все доступы первого месяца, знакомство, регламенты своего раздела'],['Дни 1–3','Инструменты, процессы, ассортимент'],['Дни 4–5','План задач на 3 недели, защита у руководителя'],['Недели 1–2','Передача дел от предыдущего сотрудника'],['Недели 2–4','Работа по плану, еженедельный разбор'],['Конец месяца','Итоговый отчёт, решение по испытательному']]))+
+  sec('Обучение инструментам', ol(['Новый инструмент → база знаний сервиса → практика → тест у руководителя.','Знакомый инструмент → ответы на вопросы руководителя.','Всё освоено за первый месяц.']))+
+  sec('Кому задавать вопросы', tbl(['Вопрос','Кому'],[['Отгрузки, поставки, маркировка','Снабжение'],['Производство','Руководитель производства'],['Оплаты','Ассистент / финансист'],['Финансы','Финансист'],['Документы','Бухгалтер'],['Остальное','COO']])+p('Ответ — в течение дня, не решено за 24 часа — к COO.'))+
+  sec('Передача дел — 2 недели', ul(['Неделя 1: уходящий работает, новый смотрит, составляется передаточный лист.','Неделя 2: новый работает, уходящий проверяет.','Итог: встреча с COO, отключение доступов уходящего.']))
+);
+node('g_offboard','general','Увольнение: доступы','g_hub', ol(['Кабинеты маркетплейсов','CRM / таск-трекер','Google-таблицы','Пароль рабочей почты','Платные сервисы','Рабочий мессенджер','Облачный диск','Общие чаты']));
+x('g_onboard','g_offboard');
+node('q_all','quiz','Анкета для всех сотрудников','g_hub', quiz('Анкета сотрудника',[...COMMON_Q,'Дата выхода.','5–10 регулярных задач и время на каждую.','Какие таблицы, сервисы и чаты используете?','Что в вашей работе нигде не описано?']));
+
+// ---------- 5. Справочники ----------
+node('ref_hub','ref','Справочники','company', p('Ассортимент, таблицы, термины.'), {size:16});
+node('ref_catalog','ref','Ассортимент','ref_hub', p(U));
+node('ref_tables','ref','Рабочие таблицы','ref_hub', tbl(['Таблица','Что внутри','Ссылка'],[['…','…',U]]));
+node('ref_gloss','ref','Глоссарий','ref_hub', tbl(['Термин','Значение'],[['ФБС / ФБО','Со своего склада / со склада маркетплейса'],['РНП','Ежедневная таблица показателей'],['ДРР','Доля рекламных расходов'],['COO / CEO','Операционный директор / владелец']]));
+
+// ---------- 6. Закрытое (на публичный сайт содержимое не выкладывать) ----------
+node('lock','lock','Закрытый раздел','company','<div class="lock">🔒 Контакты подрядчиков, личные данные сотрудников, пароли и реквизиты — не на портале.</div>', {size:16});
+
+// ---------- 7. Источники: откуда брать информацию ----------
+node('ref_sources','ref','Источники: откуда брать таблицы и регламенты','ref_hub',
+  p('Порядок сбора данных при запуске портала в новой компании.')+
+  tbl(['Что нужно','Где взять','Куда на портале'],[
+    ['Оргструктура: должности, подчинение, обязанности, графики','Google-таблица оргструктуры (лист «Структура», «Информация о сотрудниках»)','Центр (компания), роли в отделах'],
+    ['Список таблиц и ссылок','Таск-трекер компании → доска «Таблицы» (колонки по отделам)','«Рабочие таблицы», доступы в «Вводе сотрудника»'],
+    ['Готовые регламенты','Таск-трекер → доска «Таблицы» / «Документы» → колонка «Регламенты»; Google Docs и Sheets по ссылкам','Зелёные узлы в отделах'],
+    ['Обязанности и чек-листы по дням','Таблица оргструктуры: листы «Обязанности …», «Чек-лист для …»','Роли и чек-листы'],
+    ['Отчёты руководителей','Таблица оргструктуры: листы «Регламент отчёта …»','Узлы отчётов у COO, производства, финансов'],
+    ['Отпуска, увольнение, запуск товара','Таблица оргструктуры: соответствующие листы','Общие правила, продажи'],
+    ['Ассортимент и комплектации','Таблица поставок / справочник товаров','Справочник «Ассортимент»'],
+    ['Контент','Облачный диск: фотосессии, инфографика','«Рабочие таблицы»'],
+    ['Чего нет в документах','Анкеты «Вопросы» в каждом отделе → ответы сотрудников','Карточки сотрудников и регламенты']
+  ])+
+  sec('Не переносить на портал', ul(['Пароли и PIN','Банковские реквизиты','Телефоны, почты, даты рождения сотрудников','Контакты подрядчиков']))
+);
+
+// ============ ДАННЫЕ КОМПАНИИ — КОНЕЦ ============
+</script>
+<script>
+// ============ ДВИЖОК ПОРТАЛА (не менять) ============
+const ROOT = N.find(n=>!n.parent).id;
+document.title = CONFIG.name+' — регламенты компании';
+document.querySelector('.brand h1').textContent = CONFIG.name+' · Регламенты';
+document.querySelector('.brand p').textContent = CONFIG.subtitle||'';
+document.getElementById('homeBtn').textContent = CONFIG.name;
+// ============ РАДИАЛЬНЫЙ ГРАФ ============
+const byId = Object.fromEntries(N.map(n=>[n.id,n]));
+const neighbors = {}; N.forEach(n=>neighbors[n.id]=new Set());
+L.forEach(l=>{neighbors[l.source].add(l.target); neighbors[l.target].add(l.source)});
+const kidsOf = {}; N.forEach(n=>{ if(n.parent){ (kidsOf[n.parent]=kidsOf[n.parent]||[]).push(n.id) } });
+
+function build(id){ return {id, children:(kidsOf[id]||[]).map(build)} }
+const root = d3.hierarchy(build(ROOT));
+const RAD = [0, 260, 540, 800, 1000];
+d3.tree().size([2*Math.PI, 1]).separation((a,b)=>(a.parent===b.parent?1:1.6)/Math.max(1,a.depth))(root);
+// развести узлы первого кольца, чтобы не слипались
+(function(){
+  const ring=root.children.slice().sort((a,b)=>a.x-b.x), n=ring.length, gap=2*Math.PI/n*0.8;
+  for(let it=0;it<200;it++){ for(let i=0;i<n;i++){ const a=ring[i], b=ring[(i+1)%n]; let d=b.x-a.x; if(i===n-1) d+=2*Math.PI; if(d<gap){ const s=(gap-d)/2; a.x-=s; b.x+=s; } } }
+  ring.forEach(d=>{ d.x=(d.x+2*Math.PI)%(2*Math.PI) });
+})();
+const pos = {};
+root.each(d=>{ const r=RAD[d.depth]; d.r=r; pos[d.data.id]={x:r*Math.cos(d.x-Math.PI/2), y:r*Math.sin(d.x-Math.PI/2), a:d.x, depth:d.depth}; });
+
+const svg = d3.select('#svg');
+const wrap = document.getElementById('graphWrap');
+const g = svg.append('g');
+const zoom = d3.zoom().scaleExtent([0.15,3]).on('zoom',e=>{g.attr('transform',e.transform); labelMode(e.transform.k)});
+svg.call(zoom).on('dblclick.zoom',null);
+
+// кольца-ориентиры
+g.append('g').selectAll('circle').data(RAD.slice(1,4)).join('circle').attr('r',d=>d).attr('fill','none').attr('stroke','#26262c').attr('stroke-dasharray','2 6');
+
+const treeLinks = root.links();
+const linkRadial = d3.linkRadial().angle(d=>d.x).radius(d=>d.r);
+const tl = g.append('g').selectAll('path').data(treeLinks).join('path')
+  .attr('class','link').attr('fill','none').attr('stroke-width',d=>d.target.depth===1?1.8:1.1).attr('d',linkRadial);
+const xLinks = L.filter(l=>l.kind==='x');
+const xl = g.append('g').selectAll('path').data(xLinks).join('path').attr('class','link x').attr('fill','none')
+  .attr('d',l=>{const a=pos[l.source],b=pos[l.target]; return `M${a.x},${a.y} Q0,0 ${b.x},${b.y}`});
+
+const nodes = N.map(n=>({...n, ...pos[n.id]}));
+const nodeG = g.append('g').selectAll('g').data(nodes).join('g').attr('class','node').style('cursor','pointer')
+  .attr('transform',d=>`translate(${d.x},${d.y})`);
+nodeG.append('circle').attr('r',d=>Math.max(22,(d.size||TYPES[d.type].r)+10)).attr('fill','transparent');
+nodeG.append('circle').attr('class','dot').attr('r',d=>d.size||TYPES[d.type].r).attr('fill',d=>TYPES[d.type].hex)
+  .attr('stroke',d=>d.type==='lock'?'#a1a1aa':'#18181b').attr('stroke-width',d=>d.type==='lock'?1.2:2).attr('stroke-dasharray',d=>d.type==='lock'?'2 2':null);
+function short(t,n){return t.length>n?t.slice(0,n-1)+'…':t}
+nodeG.append('text').each(function(d){
+  const t=d3.select(this);
+  if(d.depth===0){ t.attr('dy',(d.size||TYPES[d.type].r)+20).attr('text-anchor','middle').style('font-size','22px').style('font-weight','700').text(d.title); return; }
+  if(d.depth===1){ // горизонтальная подпись, смещённая наружу
+    const ox=Math.cos(d.a-Math.PI/2), oy=Math.sin(d.a-Math.PI/2);
+    t.attr('x',ox*26).attr('y',oy*26+6).attr('text-anchor',Math.abs(ox)<0.3?'middle':(ox>0?'start':'end')).style('font-size','20px').style('font-weight','600').text(d.short||short(d.title,30)); return; }
+  const deg=d.a*180/Math.PI-90, flip=d.a>Math.PI;
+  t.attr('transform',`rotate(${flip?deg+180:deg})`).attr('x',flip?-16:16).attr('dy','0.32em').attr('text-anchor',flip?'end':'start')
+   .style('font-size',d.depth===2?'16px':'14px').text(short(d.title,d.depth===2?44:40));
+});
+
+nodeG.on('mouseenter',(e,d)=>highlight(d.id)).on('mouseleave',()=>highlight(currentId,true)).on('click',(e,d)=>{e.stopPropagation(); open(d.id); if(d.depth>=1) focusNode(d.id)});
+
+function labelMode(k){ nodeG.select('text').style('display',d=>(d.depth<=2||k>0.42)?null:'none'); }
+let hiddenTypes=new Set();
+function highlight(id,soft){
+  if(!id||(soft&&id===ROOT)){
+    nodeG.classed('faded',d=>hiddenTypes.has(d.type)); tl.classed('faded',d=>hiddenTypes.has(byId[d.target.data.id].type)); xl.style('display','none'); return;
+  }
+  const keep=new Set([id,...neighbors[id]]);
+  // путь к центру
+  let p=byId[id]; while(p){keep.add(p.id); p=byId[p.parent];}
+  nodeG.classed('faded',d=>hiddenTypes.has(d.type)||!keep.has(d.id));
+  tl.classed('faded',d=>!(keep.has(d.source.data.id)&&keep.has(d.target.data.id)));
+  xl.style('display',l=>(l.source===id||l.target===id)?null:'none');
+}
+function fit(){
+  const W=wrap.clientWidth,H=wrap.clientHeight, R=RAD[2]+170;
+  const k=Math.min(W,H)/(2*R);
+  svg.transition().duration(500).call(zoom.transform,d3.zoomIdentity.translate(W/2,H/2).scale(k));
+}
+function focusNode(id){
+  const n=pos[id]; if(!n)return; const t=d3.zoomTransform(svg.node()); const k=Math.max(t.k,0.75);
+  svg.transition().duration(500).call(zoom.transform,d3.zoomIdentity.translate(wrap.clientWidth/2-k*n.x,wrap.clientHeight/2-k*n.y).scale(k));
+}
+document.getElementById('fitBtn').onclick=()=>{highlight(null);fit()};
+document.getElementById('homeBtn').onclick=()=>{open(ROOT);fit()};
+window.addEventListener('resize',fit);
+
+// ============ ЛЕГЕНДА / ДЕРЕВО ============
+const legend=document.getElementById('legend');
+Object.entries(TYPES).forEach(([k,t])=>{
+  const c=document.createElement('span'); c.className='chip'; c.innerHTML=`<i style="background:${t.hex}"></i>${t.label}`;
+  c.onclick=()=>{hiddenTypes.has(k)?hiddenTypes.delete(k):hiddenTypes.add(k); c.classList.toggle('off'); highlight(currentId,true)};
+  legend.appendChild(c);
+});
+const tree=document.getElementById('tree');
+const strip=s=>(s||'').replace(/<[^>]+>/g,' ');
+function item(n,lvl){return `<div class="it l${Math.min(lvl,3)}" data-id="${n.id}" data-s="${(n.title+' '+strip(n.body)).toLowerCase().replace(/"/g,'')}"><i style="background:${TYPES[n.type].hex}"></i>${n.title}</div>`}
+let html='<div class="grp">'+item(byId[ROOT],1)+'</div>';
+(kidsOf[ROOT]||[]).forEach(id=>{
+  const n=byId[id];
+  html+=`<div class="grp"><div class="gt">${n.title.split(' — ')[0]}</div>`+item(n,1);
+  (function walk(pid,lvl){(kidsOf[pid]||[]).forEach(c=>{html+=item(byId[c],lvl); walk(c,lvl+1)})})(id,2);
+  html+='</div>';
+});
+tree.innerHTML=html;
+tree.addEventListener('click',e=>{const it=e.target.closest('.it'); if(it){open(it.dataset.id); focusNode(it.dataset.id); document.getElementById('side').classList.remove('open')}});
+document.getElementById('q').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  tree.querySelectorAll('.it').forEach(it=>it.classList.toggle('hide',q&&!it.dataset.s.includes(q)));
+  if(!q){highlight(currentId,true);return}
+  const hit=new Set(N.filter(n=>(n.title+' '+strip(n.body)).toLowerCase().includes(q)).map(n=>n.id));
+  nodeG.classed('faded',d=>!hit.has(d.id)); tl.classed('faded',true); xl.style('display','none');
+});
+document.getElementById('menuBtn').onclick=()=>document.getElementById('side').classList.toggle('open');
+
+// ============ КАРТОЧКА ============
+let currentId=null;
+function chain(id){const a=[];let n=byId[id];while(n){a.unshift(n);n=byId[n.parent]}return a}
+function open(id){
+  const n=byId[id]; if(!n)return; currentId=id;
+  const crumbs=chain(id).slice(0,-1).map(c=>`<span data-go="${c.id}">${c.title}</span>`).join(' / ');
+  const kids=(kidsOf[id]||[]).map(k=>byId[k]);
+  const rel=[...neighbors[id]].map(r=>byId[r]).filter(r=>r.id!==n.parent&&!kids.includes(r));
+  const chips=a=>`<div class="rel">${a.map(r=>`<span data-go="${r.id}"><i style="background:${TYPES[r.type].hex}"></i>${r.title}</span>`).join('')}</div>`;
+  document.getElementById('noteInner').innerHTML=
+    `<button class="btn closeNote" onclick="document.getElementById('note').classList.remove('open')" style="float:right">✕</button>`+
+    (crumbs?`<div class="crumbs">${crumbs}</div>`:'')+
+    `<div class="badge"><i style="background:${TYPES[n.type].hex}"></i>${TYPES[n.type].label}</div><h2>${n.title}</h2>`+
+    (n.body||'')+
+    (kids.length&&id!==ROOT?sec('Внутри',chips(kids)):'')+
+    (rel.length?sec('Связано',chips(rel)):'');
+  document.getElementById('note').scrollTop=0;
+  if(id!==ROOT||window.innerWidth>1100) document.getElementById('note').classList.add('open');
+  tree.querySelectorAll('.it').forEach(it=>it.classList.toggle('active',it.dataset.id===id));
+  highlight(id,true);
+  if(location.hash!=='#'+id) history.replaceState(null,'','#'+id);
+}
+document.getElementById('noteInner').addEventListener('click',e=>{const t=e.target.closest('[data-go]'); if(t){open(t.dataset.go); focusNode(t.dataset.go)}});
+function copyTpl(b){const t=b.parentElement.previousElementSibling.innerText; navigator.clipboard.writeText(t).then(()=>{b.textContent='Скопировано'; setTimeout(()=>b.textContent='Скопировать',1500)}).catch(()=>{b.textContent='Выделите текст вручную'})}
+window.addEventListener('hashchange',()=>{const id=location.hash.slice(1); if(byId[id]&&id!==currentId){open(id);focusNode(id)}});
+const startId=byId[location.hash.slice(1)]?location.hash.slice(1):ROOT;
+fit(); open(startId); if(startId!==ROOT) setTimeout(()=>focusNode(startId),550);
+labelMode(1);
+</script>
+</body>
+</html>
